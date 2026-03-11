@@ -45,6 +45,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(User.Role.USER)
+                .authProvider(User.AuthProvider.LOCAL)
                 .build();
 
         userRepository.save(user);
@@ -62,6 +63,7 @@ public class AuthService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(User.Role.ADMIN)
+                .authProvider(User.AuthProvider.LOCAL)
                 .build();
 
         userRepository.save(user);
@@ -158,12 +160,19 @@ public class AuthService {
 
         private User upsertGoogleUser(String email, String name) {
                 return userRepository.findByEmail(email)
-                                .map(existingUser -> updateUserNameIfNeeded(existingUser, name))
+                                .map(existingUser -> {
+                                        if (existingUser.getAuthProvider() != User.AuthProvider.GOOGLE) {
+                                                throw new IllegalArgumentException("Email already registered");
+                                        }
+
+                                        return updateUserNameIfNeeded(existingUser, name);
+                                })
                                 .orElseGet(() -> userRepository.save(User.builder()
                                                 .name((name != null && !name.isBlank()) ? name : email.split("@")[0])
                                                 .email(email)
                                                 .password(passwordEncoder.encode("GOOGLE_AUTH_" + UUID.randomUUID()))
                                                 .role(User.Role.USER)
+                                                .authProvider(User.AuthProvider.GOOGLE)
                                                 .build()));
         }
 

@@ -31,7 +31,15 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider")
+    private AuthProvider authProvider;
+
     public enum Role {
         USER, ADMIN
+    }
+
+    public enum AuthProvider {
+        LOCAL, GOOGLE
     }
 }
