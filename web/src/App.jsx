@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
+import AuthCallback from './pages/AuthCallback';
 import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
@@ -16,6 +17,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<AuthPage />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
         <Route
           path="/dashboard"
           element={

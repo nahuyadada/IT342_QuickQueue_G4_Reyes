@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.AuthResponse;
+import com.example.demo.dto.GoogleAuthRequest;
 import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.RegisterRequest;
 import com.example.demo.service.AuthService;
@@ -72,6 +73,22 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Invalid admin credentials"));
         }
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestBody GoogleAuthRequest request) {
+        try {
+            AuthResponse response = authService.googleLogin(request);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", e.getMessage() == null ? "Google sign-in failed" : e.getMessage()));
+        }
+    }
+
+    @GetMapping("/google/client-id")
+    public ResponseEntity<?> googleClientId() {
+        return ResponseEntity.ok(Map.of("clientId", authService.getGoogleClientId()));
     }
 
     @GetMapping("/me")
