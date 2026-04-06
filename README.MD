@@ -1,77 +1,130 @@
+﻿## QuickQueue (IT342) — How to Run
 
-# QuickQueue (IT342)
+This repo has three parts:
 
-QuickQueue is a multi-platform project with:
+- **backend/**: Spring Boot (Java) REST API
+- **web/**: React + Vite frontend
+- **mobile/**: Android (Jetpack Compose) app (currently a template screen)
 
-- **Backend**: Spring Boot (Java 17) REST API with Spring Web + JPA + MySQL
-- **Web**: React + Vite frontend
-- **Mobile**: Android (Kotlin) app using Jetpack Compose
-
-## Repository Structure
-
-- `backend/` Spring Boot API (`mvnw` wrapper included)
-- `web/` React + Vite app
-- `mobile/` Android Studio project
-- `docs/` project documentation
+---
 
 ## Prerequisites
 
-- **Backend**: Java 17, a running **MySQL** server
-- **Web**: Node.js (LTS recommended) + npm
-- **Mobile**: Android Studio (Android SDK installed)
+### Backend
 
-## Backend (Spring Boot)
+- **Java 17** (JDK 17)
+- (Optional) **Maven** — not required if using the Maven Wrapper (`mvnw.cmd`)
+- A **Supabase** project (PostgreSQL database — hosted, no local DB needed)
 
-### Configure Database
+Backend database config is in `backend/src/main/resources/application.properties`:
 
-Backend config is in `backend/src/main/resources/application.properties`.
+- URL: `jdbc:postgresql://aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres` (connection pooler — required because the direct host is IPv6-only)
+- User: `postgres.wrgbhmgpqzcbejtqqbxf`
+- Password: your Supabase database password
+- API Port: `8080`
 
-Default settings (as currently committed):
+> **Important:** Replace `[YOUR-PASSWORD]` in `application.properties` with your actual Supabase database password before running.
 
-- JDBC URL: `jdbc:mysql://localhost:3307/it342_auth...`
-- Username: `root`
-- Password: empty
+### Web
 
-If your MySQL uses a different port/credentials, update the properties file accordingly.
+- **Node.js 18+** (20+ is fine)
+- npm (comes with Node)
 
-### Run
+### Mobile
 
-From the repository root:
+- **Android Studio** + Android SDK
 
-```bash
+---
+
+## 1) Configure the Database (Supabase)
+
+No local database setup is required. The backend connects to a hosted **Supabase PostgreSQL** instance.
+
+1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
+2. Open your project → **Settings** → **Database**
+3. Under **Connection string**, select **JDBC** and switch mode to **Session**
+4. Copy the pooler JDBC URL (the direct `db.<ref>.supabase.co` host is IPv6-only and may not work on all networks)
+5. Paste it into `backend/src/main/resources/application.properties` as `spring.datasource.url`
+6. Set `spring.datasource.username` to `postgres.<your-project-ref>`
+7. Set `spring.datasource.password` to your database password
+
+Tables are created/updated automatically on startup (`spring.jpa.hibernate.ddl-auto=update`).
+
+---
+
+## 2) Run the Backend (Spring Boot)
+
+### Option A — Use the provided script (Windows)
+
+From the repo root:
+
+`run-backend.bat`
+
+Notes:
+
+- `run-backend.bat` hard-codes `JAVA_HOME` and an absolute path to your machine. If it fails on another PC, update `JAVA_HOME` and/or the `cd` path.
+
+### Option B — Run via Maven Wrapper (recommended)
+
+From the repo root (PowerShell):
+
+```powershell
 cd backend
-./mvnw spring-boot:run
+./mvnw.cmd spring-boot:run
 ```
 
-On Windows (CMD/PowerShell) you can also use:
+Backend should come up on:
 
-```bat
-cd backend
-mvnw.cmd spring-boot:run
-```
+- `http://localhost:8080`
 
-The app will start on Spring Boot’s default port (typically `8080`) unless configured otherwise.
+The web app calls auth endpoints at:
 
-## Web (React + Vite)
+- `http://localhost:8080/api/auth`
 
-From the repository root:
+---
 
-```bash
+## 3) Run the Web App (React + Vite)
+
+From the repo root (PowerShell):
+
+```powershell
 cd web
 npm install
 npm run dev
 ```
 
-Vite will print the local dev URL in the terminal (typically `http://localhost:5173`).
+Vite typically serves at:
 
-## Mobile (Android / Jetpack Compose)
+- `http://localhost:5173`
 
-1. Open the `mobile/` folder in **Android Studio**.
-2. Let Gradle sync.
-3. Run the `app` configuration on an emulator or connected device.
+If the port differs, use whatever URL Vite prints in the terminal.
 
-## Notes
+Important:
 
-- The backend includes JWT-related properties (`jwt.secret`, `jwt.expiration`) in `application.properties`.
-- If you’re running all modules together, ensure the web/mobile apps point to the correct backend base URL.
+- The frontend currently points to `http://localhost:8080` in `web/src/services/authService.js`. Ensure the backend is running first.
 
+---
+
+## 4) Run the Mobile App (Android)
+
+### Android Studio (recommended)
+
+1. Open Android Studio
+2. Open the `mobile/` folder as a project
+3. Let Gradle sync
+4. Run the `app` configuration on an emulator or a connected device
+
+### Command line (Windows)
+
+```powershell
+cd mobile
+./gradlew.bat assembleDebug
+```
+
+---
+
+## Troubleshooting
+
+- **Backend won't start / DB connection error**: confirm you have replaced `[YOUR-PASSWORD]` in `backend/src/main/resources/application.properties` with your actual Supabase database password and that your Supabase project is active.
+- **Port already in use**: change `server.port` in `backend/src/main/resources/application.properties` or stop the process using that port.
+- **Web login/register fails**: confirm backend is running on `http://localhost:8080` and you can reach `/api/auth/*` endpoints.
