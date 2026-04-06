@@ -1,49 +1,54 @@
 package com.example.demo.service;
 
-import com.example.demo.service.observer.QueueObserver;
-import com.example.demo.service.observer.QueueSubject;
+import com.example.demo.model.QueueTicket;
+import com.example.demo.repository.QueueTicketRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
+/**
+ * Core queue logic service. Handles low-level queue operations
+ * (CRUD, status changes, position lookups). Used by the QueueFacade
+ * but not called directly by controllers.
+ */
 @Service
-public class QueueService implements QueueSubject {
+@RequiredArgsConstructor
+public class QueueService {
 
-    private final List<QueueObserver> observers = new ArrayList<>();
-    private int currentQueueNumber = 0;
-    private int totalPeopleInQueue = 0;
+    private final QueueTicketRepository queueTicketRepository;
 
-    public synchronized int getNextQueueNumber() {
-        totalPeopleInQueue++;
-        return ++currentQueueNumber;
+    public QueueTicket saveTicket(QueueTicket ticket) {
+        return queueTicketRepository.save(ticket);
     }
 
-    public synchronized int getPeopleAhead() {
-        return totalPeopleInQueue - 1; // Simplistic approach
+    public Optional<QueueTicket> findTicketById(Long ticketId) {
+        return queueTicketRepository.findById(ticketId);
     }
 
-    public void advanceQueue() {
-        if (totalPeopleInQueue > 0) {
-            totalPeopleInQueue--;
-            notifyObservers();
-        }
+    public List<QueueTicket> getWaitingTickets(Long officeId) {
+        return queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(
+                officeId, QueueTicket.TicketStatus.WAITING);
     }
 
-    @Override
-    public void registerObserver(QueueObserver observer) {
-        observers.add(observer);
+    public Optional<QueueTicket> getNextWaitingTicket(Long officeId) {
+        return queueTicketRepository.findFirstByOfficeIdAndStatusOrderByPositionAsc(
+                officeId, QueueTicket.TicketStatus.WAITING);
     }
 
-    @Override
-    public void removeObserver(QueueObserver observer) {
-        observers.remove(observer);
+    public int getWaitingCount(Long officeId) {
+        return queueTicketRepository.countByOfficeIdAndStatus(
+                officeId, QueueTicket.TicketStatus.WAITING);
     }
 
-    @Override
-    public void notifyObservers() {
-        for (QueueObserver observer : observers) {
-            observer.update("The queue has advanced! People ahead of you: " + totalPeopleInQueue);
-        }
+    public Optional<QueueTicket> getActiveTicketForUser(Long userId) {
+        return queueTicketRepository.findByUserIdAndStatus(
+                userId, QueueTicket.TicketStatus.WAITING);
+    }
+
+    public QueueTicket updateTicketStatus(QueueTicket ticket, QueueTicket.TicketStatus newStatus) {
+        ticket.setStatus(newStatus);
+        return queueTicketRepository.save(ticket);
     }
 }
