@@ -1,48 +1,28 @@
-const API_BASE = 'http://localhost:8080/api/auth';
-
-const readJson = async (res) => {
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || 'Request failed');
-  return data;
-};
+/**
+ * Auth Service — Refactored to use apiClient facade.
+ *
+ * BEFORE: Each function hardcoded 'http://localhost:8080/api/auth' and
+ *         duplicated fetch options (method, headers, body, error parsing).
+ * AFTER:  Uses apiClient which handles base URL, headers, and error parsing.
+ */
+import apiClient from './apiClient';
 
 export const register = async (name, email, password) => {
-  const res = await fetch(`${API_BASE}/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password }),
-  });
-  return readJson(res);
+  return apiClient.post('/auth/register', { name, email, password });
 };
 
 export const login = async (email, password) => {
-  const res = await fetch(`${API_BASE}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  return readJson(res);
+  return apiClient.post('/auth/login', { email, password });
 };
 
 export const adminLogin = async (email, password) => {
-  const res = await fetch(`${API_BASE}/admin/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  return readJson(res);
+  return apiClient.post('/auth/admin/login', { email, password });
 };
 
 export const getGoogleClientId = async () => {
-  const res = await fetch(`${API_BASE}/google/client-id`);
-  return readJson(res);
+  return apiClient.get('/auth/google/client-id');
 };
 
 export const googleLogin = async (credential) => {
-  const res = await fetch(`${API_BASE}/google`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ credential }),
-  });
-  return readJson(res);
+  return apiClient.post('/auth/google', { credential });
 };
