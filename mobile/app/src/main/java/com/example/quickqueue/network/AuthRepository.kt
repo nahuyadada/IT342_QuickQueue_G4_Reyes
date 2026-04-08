@@ -18,13 +18,24 @@ object AuthRepository {
         }
     }
 
-    private suspend fun executeAuthCall(call: suspend () -> Response<AuthResponse>): AuthResult {
+    private suspend fun executeAuthCall(call: suspend () -> Response<AuthApiResponse>): AuthResult {
         return try {
             val response = call()
+            val body = response.body()
+
             if (response.isSuccessful) {
-                val body = response.body()
-                val message = body?.message?.takeIf { it.isNotBlank() } ?: "Request successful"
-                AuthResult(success = true, message = message, token = body?.token)
+                if (body?.success == false) {
+                    val message = body.error?.message?.takeIf { it.isNotBlank() } ?: "Request failed"
+                    return AuthResult(success = false, message = message)
+                }
+
+                val authPayload = body?.data ?: body?.toLegacyAuthResponse()
+                val message = authPayload?.message?.takeIf { it.isNotBlank() }
+                    ?: body?.message?.takeIf { it.isNotBlank() }
+                    ?: "Request successful"
+                val token = authPayload?.token ?: body?.token
+
+                AuthResult(success = true, message = message, token = token)
             } else {
                 val errorMessage = parseErrorMessage(response.errorBody()?.string())
                 AuthResult(success = false, message = errorMessage)
@@ -49,9 +60,15 @@ object AuthRepository {
 
         return try {
             val json = JSONObject(raw)
+            val topMessage = json.optString("message")
+            val topError = json.opt("error")
+
             when {
-                !json.optString("message").isNullOrBlank() -> json.optString("message")
-                !json.optString("error").isNullOrBlank() -> json.optString("error")
+                !topMessage.isNullOrBlank() -> topMessage.trim()
+                topError is JSONObject && !topError.optString("message").isNullOrBlank() -> {
+                    topError.optString("message").trim()
+                }
+                !json.optString("error").isNullOrBlank() -> json.optString("error").trim()
                 else -> "Request failed"
             }
         } catch (_: Exception) {
@@ -61,5 +78,12 @@ object AuthRepository {
 
     private fun String?.isNullOrBlank(): Boolean {
         return this == null || this.isBlank()
+    }
+
+    private fun AuthApiResponse.toLegacyAuthResponse(): AuthResponse? {
+        if (token.isNullOrBlank() && message.isNullOrBlank()) {
+            return null
+        }
+        return AuthResponse(message = message, token = token)
     }
 }

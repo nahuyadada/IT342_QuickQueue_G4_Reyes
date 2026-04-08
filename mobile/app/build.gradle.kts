@@ -14,8 +14,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // Update this value to your backend host/port when testing on a real device.
-        buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2:3000/\"")
+        // Emulator -> 10.0.2.2, backend currently reachable on port 8080.
+        buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2:8080/\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -30,11 +30,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "1.8"
     }
     buildFeatures {
         buildConfig = true
