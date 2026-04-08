@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">QuickQueue</string>
+    <string name="login_title">Welcome Back</string>
+    <string name="login_subtitle">Login to continue managing queues</string>
+    <string name="register_title">Create Account</string>
+    <string name="register_subtitle">Sign up to start using QuickQueue</string>
+    <string name="hint_name">Name</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="btn_login">Login</string>
+    <string name="btn_register">Register</string>
+    <string name="goto_register">No account yet? Register</string>
+    <string name="goto_login">Already have an account? Login</string>
+    <string name="home_title">QuickQueue</string>
+    <string name="home_subtitle">You are logged in.</string>
+    <string name="btn_logout">Logout</string>
 </resources>
