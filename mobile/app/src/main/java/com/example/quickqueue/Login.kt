@@ -4,13 +4,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
 import com.example.quickqueue.network.AuthRepository
 import kotlinx.coroutines.launch
 
@@ -20,7 +20,8 @@ class Login : AppCompatActivity() {
     private lateinit var editPassword: EditText
     private lateinit var textError: TextView
     private lateinit var progressBar: ProgressBar
-    private lateinit var buttonLogin: Button
+    private lateinit var buttonLogin: MaterialButton
+    private lateinit var buttonGoogleSignIn: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,11 +32,18 @@ class Login : AppCompatActivity() {
         textError = findViewById(R.id.textError)
         progressBar = findViewById(R.id.progressBar)
         buttonLogin = findViewById(R.id.buttonLogin)
+        buttonGoogleSignIn = findViewById(R.id.buttonGoogleSignIn)
 
         buttonLogin.setOnClickListener { submitLogin() }
+        // Placeholder only for now: intentionally no action on click.
+        buttonGoogleSignIn.setOnClickListener { }
 
         findViewById<TextView>(R.id.textGoToRegister).setOnClickListener {
             startActivity(Intent(this, Registration::class.java))
+        }
+
+        findViewById<TextView>(R.id.textForgotPassword).setOnClickListener {
+            Toast.makeText(this, R.string.forgot_password_unavailable, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -91,5 +99,6 @@ class Login : AppCompatActivity() {
     private fun setLoadingState(isLoading: Boolean) {
         progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         buttonLogin.isEnabled = !isLoading
+        buttonGoogleSignIn.isEnabled = !isLoading
     }
 }

@@ -7,4 +7,13 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="login_screen_background">#F2F3F7</color>
+    <color name="login_input_background">#EEF2FA</color>
+    <color name="login_input_stroke">#CBD5E1</color>
+    <color name="login_hint_color">#7B8798</color>
+    <color name="login_body_text">#1F2937</color>
+    <color name="login_primary_blue">#2F5EEB</color>
+    <color name="login_link_blue">#2F5EEB</color>
+    <color name="login_divider">#D5DBE5</color>
+    <color name="login_checkbox_tint">#6B7280</color>
 </resources>

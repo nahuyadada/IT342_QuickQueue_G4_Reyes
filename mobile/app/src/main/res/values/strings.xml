@@ -1,17 +1,31 @@
 <resources>
     <string name="app_name">QuickQueue</string>
-    <string name="login_title">Welcome Back</string>
-    <string name="login_subtitle">Login to continue managing queues</string>
+    <string name="login_title">Login</string>
+    <string name="login_subtitle">Access your QuickQueue dashboard</string>
     <string name="register_title">Create Account</string>
     <string name="register_subtitle">Sign up to start using QuickQueue</string>
     <string name="hint_name">Name</string>
-    <string name="hint_email">Email</string>
-    <string name="hint_password">Password</string>
-    <string name="btn_login">Login</string>
+    <string name="hint_email">Enter your email</string>
+    <string name="hint_password">Enter your password</string>
+    <string name="btn_login">Sign in</string>
+    <string name="email_label">Email Address</string>
+    <string name="password_label">Password</string>
+    <string name="remember_me">Remember me</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="forgot_password_unavailable">Password reset is not available yet.</string>
+    <string name="continue_with">Or continue with</string>
+    <string name="continue_with_google">Continue with Google</string>
+    <string name="no_account_prompt">Don\'t have an account?</string>
+    <string name="create_one">Create one</string>
     <string name="btn_register">Register</string>
     <string name="goto_register">No account yet? Register</string>
     <string name="goto_login">Already have an account? Login</string>
     <string name="home_title">QuickQueue</string>
     <string name="home_subtitle">You are logged in.</string>
     <string name="btn_logout">Logout</string>
+    <string name="google_web_client_id">YOUR_WEB_CLIENT_ID.apps.googleusercontent.com</string>
+    <string name="google_client_id_missing">Set google_web_client_id in strings.xml before using Google sign in.</string>
+    <string name="google_sign_in_success">Signed in with Google: %1$s</string>
+    <string name="google_sign_in_failed">Google sign in failed. Please try again.</string>
+    <string name="google_account_unknown_email">your account</string>
 </resources>
