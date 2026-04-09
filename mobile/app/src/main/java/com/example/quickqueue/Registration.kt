@@ -4,13 +4,13 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Patterns
 import android.view.View
-import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.button.MaterialButton
 import com.example.quickqueue.network.AuthRepository
 import kotlinx.coroutines.launch
 
@@ -19,9 +19,11 @@ class Registration : AppCompatActivity() {
     private lateinit var editName: EditText
     private lateinit var editEmail: EditText
     private lateinit var editPassword: EditText
+    private lateinit var editConfirmPassword: EditText
     private lateinit var textError: TextView
     private lateinit var progressBar: ProgressBar
-    private lateinit var buttonRegister: Button
+    private lateinit var buttonRegister: MaterialButton
+    private lateinit var buttonGoogleSignIn: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,11 +32,15 @@ class Registration : AppCompatActivity() {
         editName = findViewById(R.id.editName)
         editEmail = findViewById(R.id.editEmail)
         editPassword = findViewById(R.id.editPassword)
+        editConfirmPassword = findViewById(R.id.editConfirmPassword)
         textError = findViewById(R.id.textError)
         progressBar = findViewById(R.id.progressBar)
         buttonRegister = findViewById(R.id.buttonRegister)
+        buttonGoogleSignIn = findViewById(R.id.buttonGoogleSignIn)
 
         buttonRegister.setOnClickListener { submitRegistration() }
+        // Placeholder only for now: intentionally no action on click.
+        buttonGoogleSignIn.setOnClickListener { }
 
         findViewById<TextView>(R.id.textGoToLogin).setOnClickListener {
             finish()
@@ -45,8 +51,9 @@ class Registration : AppCompatActivity() {
         val name = editName.text.toString().trim()
         val email = editEmail.text.toString().trim()
         val password = editPassword.text.toString()
+        val confirmPassword = editConfirmPassword.text.toString()
 
-        if (!validateInput(name, email, password)) {
+        if (!validateInput(name, email, password, confirmPassword)) {
             return
         }
 
@@ -67,7 +74,7 @@ class Registration : AppCompatActivity() {
         }
     }
 
-    private fun validateInput(name: String, email: String, password: String): Boolean {
+    private fun validateInput(name: String, email: String, password: String, confirmPassword: String): Boolean {
         if (name.isBlank()) {
             editName.error = "Name is required"
             editName.requestFocus()
@@ -93,11 +100,22 @@ class Registration : AppCompatActivity() {
             editPassword.requestFocus()
             return false
         }
+        if (confirmPassword.isBlank()) {
+            editConfirmPassword.error = "Confirm password is required"
+            editConfirmPassword.requestFocus()
+            return false
+        }
+        if (password != confirmPassword) {
+            editConfirmPassword.error = "Passwords do not match"
+            editConfirmPassword.requestFocus()
+            return false
+        }
         return true
     }
 
     private fun setLoadingState(isLoading: Boolean) {
         progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         buttonRegister.isEnabled = !isLoading
+        buttonGoogleSignIn.isEnabled = !isLoading
     }
 }
