@@ -40,8 +40,10 @@ export default function MapViewPage() {
   const filtered = useMemo(() => {
     if (!query.trim()) return offices;
     const normalized = query.toLowerCase();
-    return offices.filter((office) => `${office.name} ${office.type}`.toLowerCase().includes(normalized));
+    return offices.filter((office) => `${office.name} ${office.type} ${office.address || ''}`.toLowerCase().includes(normalized));
   }, [offices, query]);
+
+  const selectedOffice = offices.find((office) => office.id === selectedOfficeId) || null;
 
   const openRegisterForm = () => {
     setRegistrationMessage('');
@@ -170,13 +172,19 @@ export default function MapViewPage() {
               className={`portal-map-marker ${selectedOfficeId === office.id ? 'active' : ''}`}
               style={{ left: `${10 + ((index * 17) % 75)}%`, top: `${15 + ((index * 11) % 65)}%` }}
               onClick={() => requestJoinFromOffice(office)}
-              title={`Join queue at ${office.name}`}
+              title={`Join queue at ${office.name} - ${office.address || 'No address provided'}`}
             >
               <span>📍</span>
               <small>{joiningOfficeId === office.id ? 'Joining...' : office.name}</small>
             </div>
           ))}
         </div>
+        {selectedOffice && (
+          <div className="portal-selected-place">
+            <strong>{selectedOffice.name}</strong>
+            <span>{selectedOffice.address || 'No business location provided'}</span>
+          </div>
+        )}
         <p className="portal-muted portal-inline-hint">Click any place marker to start joining that queue.</p>
       </div>
 
@@ -193,9 +201,12 @@ export default function MapViewPage() {
               key={office.id}
               className={`portal-list-item portal-list-item-clickable ${selectedOfficeId === office.id ? 'active' : ''}`}
               onClick={() => requestJoinFromOffice(office)}
-              title={`Join queue at ${office.name}`}
+              title={`Join queue at ${office.name} - ${office.address || 'No address provided'}`}
             >
-              <strong>{office.name}</strong>
+              <div className="portal-list-main">
+                <strong>{office.name}</strong>
+                <small>{office.address || 'No business location provided'}</small>
+              </div>
               <span>{joiningOfficeId === office.id ? 'Joining...' : office.type}</span>
             </div>
           ))}
@@ -252,6 +263,7 @@ export default function MapViewPage() {
           <div className="portal-modal">
             <h3>Confirm Queue Join</h3>
             <p className="portal-muted">Join queue at <strong>{officeToConfirm.name}</strong>?</p>
+            <p className="portal-muted">Place: {officeToConfirm.address || 'No business location provided'}</p>
 
             <div className="portal-btn-row portal-modal-actions">
               <button type="button" className="portal-btn" onClick={closeJoinConfirm} disabled={!!joiningOfficeId}>

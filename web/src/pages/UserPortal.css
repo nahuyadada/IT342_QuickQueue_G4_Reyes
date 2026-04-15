@@ -353,6 +353,16 @@
   font-size: 0.86rem;
 }
 
+.portal-list-main {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.portal-list-main small {
+  color: #6b7280;
+  font-size: 0.74rem;
+}
+
 .portal-list-item span {
   color: #6b7280;
 }
@@ -372,6 +382,26 @@
 
 .portal-inline-hint {
   margin-top: 0.65rem;
+}
+
+.portal-selected-place {
+  margin-top: 0.7rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.58rem 0.68rem;
+  background: #f9fafb;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.portal-selected-place strong {
+  font-size: 0.86rem;
+  color: #111827;
+}
+
+.portal-selected-place span {
+  font-size: 0.8rem;
+  color: #6b7280;
 }
 
 .portal-modal-backdrop {

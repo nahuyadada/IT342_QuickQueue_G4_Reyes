@@ -1,16 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getCurrentUserProfile } from '../services/authService';
-import { cancelTicket, getOffices, getQueueStatus, joinQueue } from '../services/queueService';
+import { cancelTicket, getQueueStatus } from '../services/queueService';
 
 export default function ActiveQueuesPage() {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
-  const [offices, setOffices] = useState([]);
-  const [officeQuery, setOfficeQuery] = useState('');
-  const [selectedOfficeId, setSelectedOfficeId] = useState('');
   const [ticketStatus, setTicketStatus] = useState(null);
   const [activeTicketId, setActiveTicketId] = useState(localStorage.getItem('activeTicketId') || '');
-  const [loadingOffices, setLoadingOffices] = useState(false);
-  const [joining, setJoining] = useState(false);
   const [refreshingStatus, setRefreshingStatus] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState('');
@@ -20,14 +15,6 @@ export default function ActiveQueuesPage() {
     setError('');
     setSuccess('');
   };
-
-  const hasActiveTicket = ticketStatus && ['WAITING', 'SERVING'].includes(ticketStatus.status);
-
-  const filteredOffices = useMemo(() => {
-    if (!officeQuery.trim()) return offices;
-    const query = officeQuery.toLowerCase();
-    return offices.filter((office) => (`${office.name} ${office.type}`).toLowerCase().includes(query));
-  }, [offices, officeQuery]);
 
   const resolveUserProfile = async () => {
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -48,21 +35,6 @@ export default function ActiveQueuesPage() {
     localStorage.setItem('user', JSON.stringify(mergedUser));
     setUser(mergedUser);
     return mergedUser;
-  };
-
-  const fetchOffices = async () => {
-    setLoadingOffices(true);
-    try {
-      const officeList = await getOffices();
-      setOffices(officeList || []);
-      if (!selectedOfficeId && officeList?.length) {
-        setSelectedOfficeId(String(officeList[0].id));
-      }
-    } catch (err) {
-      setError(err.message || 'Unable to load service offices.');
-    } finally {
-      setLoadingOffices(false);
-    }
   };
 
   const refreshQueueStatus = async (ticketId = activeTicketId, { silent = false } = {}) => {
@@ -91,39 +63,6 @@ export default function ActiveQueuesPage() {
       if (!silent) {
         setRefreshingStatus(false);
       }
-    }
-  };
-
-  const handleJoinQueue = async () => {
-    clearMessages();
-
-    if (hasActiveTicket) {
-      setError('You already have an active ticket. Cancel or finish it before joining a new queue.');
-      return;
-    }
-
-    if (!selectedOfficeId) {
-      setError('Please select a service office first.');
-      return;
-    }
-
-    setJoining(true);
-    try {
-      const profile = await resolveUserProfile();
-      if (!profile.id) {
-        throw new Error('Unable to identify your account. Please log out and log in again.');
-      }
-
-      const createdTicket = await joinQueue(profile.id, Number(selectedOfficeId));
-      setTicketStatus(createdTicket);
-      setActiveTicketId(String(createdTicket.ticketId));
-      localStorage.setItem('activeTicketId', String(createdTicket.ticketId));
-      setSuccess(`Ticket ${createdTicket.ticketNumber} created successfully.`);
-      await refreshQueueStatus(createdTicket.ticketId, { silent: true });
-    } catch (err) {
-      setError(err.message || 'Failed to join queue.');
-    } finally {
-      setJoining(false);
     }
   };
 
@@ -156,8 +95,6 @@ export default function ActiveQueuesPage() {
         // fallback to existing local user
       }
 
-      await fetchOffices();
-
       if (activeTicketId) {
         await refreshQueueStatus(activeTicketId, { silent: true });
       }
@@ -170,49 +107,6 @@ export default function ActiveQueuesPage() {
     <div className="portal-grid">
       {error && <div className="portal-alert portal-alert-error">{error}</div>}
       {success && <div className="portal-alert portal-alert-success">{success}</div>}
-
-      <div className="portal-panel">
-        <h3>Join Queue</h3>
-        <p className="portal-muted">Select an office and get your queue ticket.</p>
-
-        <div className="portal-controls">
-          <input
-            className="portal-input"
-            type="text"
-            placeholder="Search office..."
-            value={officeQuery}
-            onChange={(e) => setOfficeQuery(e.target.value)}
-          />
-
-          <select
-            className="portal-input"
-            value={selectedOfficeId}
-            onChange={(e) => setSelectedOfficeId(e.target.value)}
-            disabled={loadingOffices || filteredOffices.length === 0}
-          >
-            {filteredOffices.length === 0 && <option value="">No offices found</option>}
-            {filteredOffices.map((office) => (
-              <option key={office.id} value={office.id}>
-                {office.name} ({office.type})
-              </option>
-            ))}
-          </select>
-
-          <div className="portal-btn-row">
-            <button type="button" className="portal-btn" onClick={fetchOffices} disabled={loadingOffices}>
-              {loadingOffices ? 'Loading...' : 'Reload Offices'}
-            </button>
-            <button
-              type="button"
-              className="portal-btn portal-btn-primary"
-              onClick={handleJoinQueue}
-              disabled={joining || loadingOffices || filteredOffices.length === 0}
-            >
-              {joining ? 'Creating Ticket...' : 'Take Ticket'}
-            </button>
-          </div>
-        </div>
-      </div>
 
       <div className="portal-panel">
         <h3>My Active Queue</h3>
