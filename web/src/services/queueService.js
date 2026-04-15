@@ -30,6 +30,10 @@ export const getOffices = async () => {
   return apiClient.get('/offices');
 };
 
+export const registerOffice = async ({ name, address, type }) => {
+  return apiClient.post('/offices/register', { name, address, type });
+};
+
 export const getHolidays = async (country = 'PH', year = 2026) => {
   return apiClient.get(`/integration/holidays?country=${country}&year=${year}`);
 };

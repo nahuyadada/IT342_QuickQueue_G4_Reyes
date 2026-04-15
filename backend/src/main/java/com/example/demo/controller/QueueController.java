@@ -1,8 +1,10 @@
 package com.example.demo.controller;
 
 import com.example.demo.dto.ApiResponse;
+import com.example.demo.dto.OfficeRegistrationRequest;
 import com.example.demo.facade.QueueFacade;
 import com.example.demo.model.ServiceOffice;
+import com.example.demo.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,7 @@ import java.util.Map;
 public class QueueController {
 
     private final QueueFacade queueFacade;
+    private final AuthService authService;
 
     @PostMapping("/queues/join")
     public ResponseEntity<ApiResponse<Map<String, Object>>> joinQueue(
@@ -83,5 +86,77 @@ public class QueueController {
     public ResponseEntity<ApiResponse<List<ServiceOffice>>> getOffices() {
         List<ServiceOffice> offices = queueFacade.getActiveOffices();
         return ResponseEntity.ok(ApiResponse.success(offices));
+    }
+
+    @PostMapping("/offices/register")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> registerOffice(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody OfficeRegistrationRequest request) {
+        try {
+            Map<String, Object> profile = authService.getCurrentUserProfile(authHeader);
+            Number ownerUserIdValue = (Number) profile.get("id");
+            Long ownerUserId = ownerUserIdValue.longValue();
+
+            Map<String, Object> office = queueFacade.registerOffice(ownerUserId, request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(office));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("BUSINESS-001", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/admin/offices/registrations/pending")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPendingOfficeRegistrations(
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            ensureAdmin(authHeader);
+            List<Map<String, Object>> pending = queueFacade.getPendingOfficeRegistrations();
+            return ResponseEntity.ok(ApiResponse.success(pending));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("AUTH-003", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/admin/offices/registrations/{officeId}/approve")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> approveOfficeRegistration(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long officeId) {
+        try {
+            ensureAdmin(authHeader);
+            Map<String, Object> office = queueFacade.approveOfficeRegistration(officeId);
+            return ResponseEntity.ok(ApiResponse.success(office));
+        } catch (RuntimeException e) {
+            HttpStatus status = e.getMessage().contains("pending") || e.getMessage().contains("not found")
+                    ? HttpStatus.BAD_REQUEST
+                    : HttpStatus.FORBIDDEN;
+            return ResponseEntity.status(status)
+                    .body(ApiResponse.error(status == HttpStatus.FORBIDDEN ? "AUTH-003" : "BUSINESS-001", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/admin/offices/registrations/{officeId}/reject")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> rejectOfficeRegistration(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long officeId) {
+        try {
+            ensureAdmin(authHeader);
+            Map<String, Object> office = queueFacade.rejectOfficeRegistration(officeId);
+            return ResponseEntity.ok(ApiResponse.success(office));
+        } catch (RuntimeException e) {
+            HttpStatus status = e.getMessage().contains("pending") || e.getMessage().contains("not found")
+                    ? HttpStatus.BAD_REQUEST
+                    : HttpStatus.FORBIDDEN;
+            return ResponseEntity.status(status)
+                    .body(ApiResponse.error(status == HttpStatus.FORBIDDEN ? "AUTH-003" : "BUSINESS-001", e.getMessage()));
+        }
+    }
+
+    private void ensureAdmin(String authHeader) {
+        Map<String, Object> profile = authService.getCurrentUserProfile(authHeader);
+        Object role = profile.get("role");
+        if (role == null || !"ADMIN".equalsIgnoreCase(String.valueOf(role))) {
+            throw new RuntimeException("Admin access required");
+        }
     }
 }

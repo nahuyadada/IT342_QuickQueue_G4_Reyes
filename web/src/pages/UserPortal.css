@@ -347,6 +347,29 @@
   color: #6b7280;
 }
 
+.portal-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  z-index: 50;
+}
+
+.portal-modal {
+  width: min(520px, 100%);
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.portal-modal .portal-alert {
+  grid-column: auto;
+  margin-top: 0.7rem;
+}
+
 @media (max-width: 1024px) {
   .portal-root {
     grid-template-columns: 1fr;

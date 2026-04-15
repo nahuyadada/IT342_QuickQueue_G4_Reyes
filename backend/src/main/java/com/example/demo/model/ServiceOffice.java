@@ -29,11 +29,25 @@ public class ServiceOffice {
     @Column(nullable = false)
     private String type; // e.g., "CLINIC", "BANK", "GOVERNMENT"
 
+    @Column
+    private Long ownerUserId;
+
     @Builder.Default
     @Column(nullable = false)
     private boolean isActive = true;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(nullable = false)
+    private ApprovalStatus approvalStatus = ApprovalStatus.PENDING;
+
     @Builder.Default
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    public enum ApprovalStatus {
+        PENDING,
+        APPROVED,
+        REJECTED
+    }
 }
