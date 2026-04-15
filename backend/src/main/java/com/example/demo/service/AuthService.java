@@ -176,6 +176,33 @@ public class AuthService {
         );
     }
 
+    public Map<String, Object> updateCurrentUserName(String authHeader, String newName) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization header is missing or invalid");
+        }
+
+        String name = newName == null ? "" : newName.trim();
+        if (name.isBlank()) {
+            throw new RuntimeException("Name is required");
+        }
+
+        String token = authHeader.substring(7);
+        String email = jwtService.extractUsername(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setName(name);
+        User savedUser = userRepository.save(user);
+
+        return Map.of(
+                "id", savedUser.getId(),
+                "name", savedUser.getName(),
+                "email", savedUser.getEmail(),
+                "role", savedUser.getRole().name()
+        );
+    }
+
     // ── Private Helpers ──────────────────────────────────────────────
 
     private User upsertGoogleUser(String email, String name) {

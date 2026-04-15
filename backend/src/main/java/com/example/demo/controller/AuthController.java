@@ -5,6 +5,7 @@ import com.example.demo.dto.AuthResponse;
 import com.example.demo.dto.GoogleAuthRequest;
 import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.RegisterRequest;
+import com.example.demo.dto.UpdateProfileRequest;
 import com.example.demo.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -120,6 +121,23 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("AUTH-001", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/me")
+    public ResponseEntity<ApiResponse<?>> updateCurrentUser(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody UpdateProfileRequest request) {
+        try {
+            if (request.getName() == null || request.getName().isBlank()) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("VALID-001", "Validation failed", Map.of("name", "Name is required")));
+            }
+
+            return ResponseEntity.ok(ApiResponse.success(authService.updateCurrentUserName(authHeader, request.getName())));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("BUSINESS-001", e.getMessage()));
         }
     }
 }
