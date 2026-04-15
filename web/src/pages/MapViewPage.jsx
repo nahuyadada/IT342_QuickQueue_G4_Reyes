@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { getOffices, registerOffice } from '../services/queueService';
+import { getCurrentUserProfile } from '../services/authService';
+import { getOffices, joinQueue, registerOffice } from '../services/queueService';
 
 export default function MapViewPage() {
   const [offices, setOffices] = useState([]);
@@ -13,6 +14,11 @@ export default function MapViewPage() {
   const [businessName, setBusinessName] = useState('');
   const [businessAddress, setBusinessAddress] = useState('');
   const [businessType, setBusinessType] = useState('');
+  const [selectedOfficeId, setSelectedOfficeId] = useState(null);
+  const [joiningOfficeId, setJoiningOfficeId] = useState(null);
+  const [officeToConfirm, setOfficeToConfirm] = useState(null);
+  const [queueMessage, setQueueMessage] = useState('');
+  const [queueError, setQueueError] = useState('');
 
   const loadOffices = async () => {
     setLoading(true);
@@ -79,10 +85,66 @@ export default function MapViewPage() {
     }
   };
 
+  const resolveUserProfile = async () => {
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    if (currentUser.id) {
+      return currentUser;
+    }
+
+    const profile = await getCurrentUserProfile();
+    const mergedUser = {
+      ...currentUser,
+      id: profile.id,
+      name: profile.name,
+      email: profile.email,
+      role: profile.role,
+    };
+
+    localStorage.setItem('user', JSON.stringify(mergedUser));
+    return mergedUser;
+  };
+
+  const requestJoinFromOffice = (office) => {
+    setSelectedOfficeId(office.id);
+    setOfficeToConfirm(office);
+  };
+
+  const closeJoinConfirm = () => {
+    if (joiningOfficeId) return;
+    setOfficeToConfirm(null);
+  };
+
+  const confirmJoinFromOffice = async () => {
+    if (!officeToConfirm) return;
+
+    const office = officeToConfirm;
+    setQueueMessage('');
+    setQueueError('');
+    setJoiningOfficeId(office.id);
+
+    try {
+      const user = await resolveUserProfile();
+      if (!user.id) {
+        throw new Error('Unable to identify your account. Please log in again.');
+      }
+
+      const ticket = await joinQueue(user.id, office.id);
+      localStorage.setItem('activeTicketId', String(ticket.ticketId));
+      setQueueMessage(`Joined ${office.name}. Ticket ${ticket.ticketNumber} created.`);
+      setOfficeToConfirm(null);
+    } catch (err) {
+      setQueueError(err.message || 'Unable to join this queue.');
+    } finally {
+      setJoiningOfficeId(null);
+    }
+  };
+
   return (
     <div className="portal-grid portal-grid-map">
       {error && <div className="portal-alert portal-alert-error">{error}</div>}
       {registrationMessage && <div className="portal-alert portal-alert-success">{registrationMessage}</div>}
+      {queueMessage && <div className="portal-alert portal-alert-success">{queueMessage}</div>}
+      {queueError && <div className="portal-alert portal-alert-error">{queueError}</div>}
 
       <div className="portal-panel">
         <div className="portal-panel-head">
@@ -105,14 +167,17 @@ export default function MapViewPage() {
           {filtered.map((office, index) => (
             <div
               key={office.id}
-              className="portal-map-marker"
+              className={`portal-map-marker ${selectedOfficeId === office.id ? 'active' : ''}`}
               style={{ left: `${10 + ((index * 17) % 75)}%`, top: `${15 + ((index * 11) % 65)}%` }}
+              onClick={() => requestJoinFromOffice(office)}
+              title={`Join queue at ${office.name}`}
             >
               <span>📍</span>
-              <small>{office.name}</small>
+              <small>{joiningOfficeId === office.id ? 'Joining...' : office.name}</small>
             </div>
           ))}
         </div>
+        <p className="portal-muted portal-inline-hint">Click any place marker to start joining that queue.</p>
       </div>
 
       <div className="portal-panel">
@@ -124,9 +189,14 @@ export default function MapViewPage() {
         </div>
         <div className="portal-list">
           {filtered.map((office) => (
-            <div key={office.id} className="portal-list-item">
+            <div
+              key={office.id}
+              className={`portal-list-item portal-list-item-clickable ${selectedOfficeId === office.id ? 'active' : ''}`}
+              onClick={() => requestJoinFromOffice(office)}
+              title={`Join queue at ${office.name}`}
+            >
               <strong>{office.name}</strong>
-              <span>{office.type}</span>
+              <span>{joiningOfficeId === office.id ? 'Joining...' : office.type}</span>
             </div>
           ))}
           {filtered.length === 0 && <p className="portal-muted">No offices to display.</p>}
@@ -173,6 +243,24 @@ export default function MapViewPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {officeToConfirm && (
+        <div className="portal-modal-backdrop" role="dialog" aria-modal="true">
+          <div className="portal-modal">
+            <h3>Confirm Queue Join</h3>
+            <p className="portal-muted">Join queue at <strong>{officeToConfirm.name}</strong>?</p>
+
+            <div className="portal-btn-row portal-modal-actions">
+              <button type="button" className="portal-btn" onClick={closeJoinConfirm} disabled={!!joiningOfficeId}>
+                Cancel
+              </button>
+              <button type="button" className="portal-btn portal-btn-primary" onClick={confirmJoinFromOffice} disabled={!!joiningOfficeId}>
+                {joiningOfficeId === officeToConfirm.id ? 'Joining...' : 'Confirm'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -316,6 +316,16 @@
   padding: 0.2rem 0.45rem;
   font-size: 0.72rem;
   max-width: 180px;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.portal-map-marker:hover {
+  background: #000;
+}
+
+.portal-map-marker.active {
+  border-color: #fbbf24;
 }
 
 .portal-map-marker small {
@@ -347,6 +357,23 @@
   color: #6b7280;
 }
 
+.portal-list-item-clickable {
+  cursor: pointer;
+}
+
+.portal-list-item-clickable:hover {
+  background: #f9fafb;
+}
+
+.portal-list-item.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.portal-inline-hint {
+  margin-top: 0.65rem;
+}
+
 .portal-modal-backdrop {
   position: fixed;
   inset: 0;
@@ -368,6 +395,11 @@
 .portal-modal .portal-alert {
   grid-column: auto;
   margin-top: 0.7rem;
+}
+
+.portal-modal-actions {
+  margin-top: 0.9rem;
+  justify-content: flex-end;
 }
 
 @media (max-width: 1024px) {
