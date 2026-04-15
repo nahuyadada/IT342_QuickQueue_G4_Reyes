@@ -41,11 +41,13 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         try {
             AuthResponse authResponse = authService.authenticateWithGoogleOAuth2User(oAuth2User);
             String encodedToken = URLEncoder.encode(authResponse.getAccessToken(), StandardCharsets.UTF_8);
+            String encodedId = URLEncoder.encode(String.valueOf(authResponse.getId()), StandardCharsets.UTF_8);
             String encodedName = URLEncoder.encode(authResponse.getName(), StandardCharsets.UTF_8);
             String encodedEmail = URLEncoder.encode(authResponse.getEmail(), StandardCharsets.UTF_8);
             String encodedRole = URLEncoder.encode(authResponse.getRole(), StandardCharsets.UTF_8);
 
-            response.sendRedirect(frontendUrl + "/auth/callback?token=" + encodedToken
+            response.sendRedirect(frontendUrl + "/auth/callback?id=" + encodedId
+                    + "&token=" + encodedToken
                     + "&name=" + encodedName
                     + "&email=" + encodedEmail
                     + "&role=" + encodedRole);

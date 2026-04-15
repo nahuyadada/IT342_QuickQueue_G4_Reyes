@@ -1,11 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile } from '../services/authService';
 import { cancelTicket, getOffices, getQueueStatus, joinQueue } from '../services/queueService';
-import './Dashboard.css';
 
-export default function Dashboard() {
-  const navigate = useNavigate();
+export default function ActiveQueuesPage() {
   const [user, setUser] = useState(JSON.parse(localStorage.getItem('user') || '{}'));
   const [offices, setOffices] = useState([]);
   const [officeQuery, setOfficeQuery] = useState('');
@@ -18,13 +15,6 @@ export default function Dashboard() {
   const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('activeTicketId');
-    navigate('/');
-  };
 
   const clearMessages = () => {
     setError('');
@@ -163,8 +153,9 @@ export default function Dashboard() {
       try {
         await resolveUserProfile();
       } catch {
-        // If profile fetch fails, fallback to whatever is in localStorage.
+        // fallback to existing local user
       }
+
       await fetchOffices();
 
       if (activeTicketId) {
@@ -176,113 +167,87 @@ export default function Dashboard() {
   }, []);
 
   return (
-    <div className="dash-root">
-      <div className="dash-navbar">
-        <div className="dash-nav-brand">
-          <span className="dash-nav-logo">Q</span>
-          QuickQueue
-        </div>
-        <div className="dash-nav-user">
-          <span>👤 {user.name || 'User'}</span>
-          <button className="dash-logout-btn" onClick={handleLogout}>Logout</button>
+    <div className="portal-grid">
+      {error && <div className="portal-alert portal-alert-error">{error}</div>}
+      {success && <div className="portal-alert portal-alert-success">{success}</div>}
+
+      <div className="portal-panel">
+        <h3>Join Queue</h3>
+        <p className="portal-muted">Select an office and get your queue ticket.</p>
+
+        <div className="portal-controls">
+          <input
+            className="portal-input"
+            type="text"
+            placeholder="Search office..."
+            value={officeQuery}
+            onChange={(e) => setOfficeQuery(e.target.value)}
+          />
+
+          <select
+            className="portal-input"
+            value={selectedOfficeId}
+            onChange={(e) => setSelectedOfficeId(e.target.value)}
+            disabled={loadingOffices || filteredOffices.length === 0}
+          >
+            {filteredOffices.length === 0 && <option value="">No offices found</option>}
+            {filteredOffices.map((office) => (
+              <option key={office.id} value={office.id}>
+                {office.name} ({office.type})
+              </option>
+            ))}
+          </select>
+
+          <div className="portal-btn-row">
+            <button type="button" className="portal-btn" onClick={fetchOffices} disabled={loadingOffices}>
+              {loadingOffices ? 'Loading...' : 'Reload Offices'}
+            </button>
+            <button
+              type="button"
+              className="portal-btn portal-btn-primary"
+              onClick={handleJoinQueue}
+              disabled={joining || loadingOffices || filteredOffices.length === 0}
+            >
+              {joining ? 'Creating Ticket...' : 'Take Ticket'}
+            </button>
+          </div>
         </div>
       </div>
-      <div className="dash-content">
-        <div className="dash-welcome-card">
-          <h1>Welcome, {user.name || 'User'}! 👋</h1>
-          <p>You are logged in as <strong>{user.email || 'No email'}</strong></p>
-        </div>
 
-        {error && <div className="dash-alert dash-alert-error">{error}</div>}
-        {success && <div className="dash-alert dash-alert-success">{success}</div>}
+      <div className="portal-panel">
+        <h3>My Active Queue</h3>
+        <p className="portal-muted">{user.name || 'User'} · {user.email || 'No email'}</p>
 
-        <div className="dash-cards dash-cards-stack">
-          <div className="dash-card dash-card-static">
-            <div className="dash-card-header">
-              <div className="dash-card-icon">🏢</div>
-              <div>
-                <h3>Select Office</h3>
-                <p>Find your service office, then take a queue ticket.</p>
-              </div>
-            </div>
+        {!ticketStatus && <div className="portal-empty">No active ticket yet. Join a queue to see status.</div>}
 
-            <div className="dash-controls">
-              <input
-                className="dash-input"
-                type="text"
-                placeholder="Search office..."
-                value={officeQuery}
-                onChange={(e) => setOfficeQuery(e.target.value)}
-              />
-
-              <select
-                className="dash-select"
-                value={selectedOfficeId}
-                onChange={(e) => setSelectedOfficeId(e.target.value)}
-                disabled={loadingOffices || filteredOffices.length === 0}
-              >
-                {filteredOffices.length === 0 && <option value="">No offices found</option>}
-                {filteredOffices.map((office) => (
-                  <option key={office.id} value={office.id}>
-                    {office.name} ({office.type})
-                  </option>
-                ))}
-              </select>
-
-              <div className="dash-btn-row">
-                <button type="button" className="dash-btn" onClick={fetchOffices} disabled={loadingOffices}>
-                  {loadingOffices ? 'Loading...' : 'Reload Offices'}
-                </button>
-                <button type="button" className="dash-btn dash-btn-primary" onClick={handleJoinQueue} disabled={joining || loadingOffices || filteredOffices.length === 0}>
-                  {joining ? 'Creating Ticket...' : 'Take Ticket'}
-                </button>
-              </div>
-            </div>
+        {ticketStatus && (
+          <div className="portal-ticket-grid">
+            <div><span>Ticket Number</span><strong>{ticketStatus.ticketNumber || '-'}</strong></div>
+            <div><span>Status</span><strong>{ticketStatus.status || '-'}</strong></div>
+            <div><span>Office</span><strong>{ticketStatus.officeName || '-'}</strong></div>
+            <div><span>People Ahead</span><strong>{ticketStatus.peopleAhead ?? '-'}</strong></div>
+            <div><span>Est. Wait</span><strong>{ticketStatus.estimatedWaitMinutes ?? '-'} min</strong></div>
+            <div><span>Position</span><strong>{ticketStatus.position ?? '-'}</strong></div>
           </div>
+        )}
 
-          <div className="dash-card dash-card-static">
-            <div className="dash-card-header">
-              <div className="dash-card-icon">🎟️</div>
-              <div>
-                <h3>My Ticket</h3>
-                <p>Monitor your queue status in real time.</p>
-              </div>
-            </div>
-
-            {!ticketStatus && (
-              <div className="dash-empty">No active ticket yet. Join a queue to view your live status.</div>
-            )}
-
-            {ticketStatus && (
-              <div className="dash-ticket-grid">
-                <div><span>Ticket Number</span><strong>{ticketStatus.ticketNumber || '-'}</strong></div>
-                <div><span>Status</span><strong>{ticketStatus.status || '-'}</strong></div>
-                <div><span>Office</span><strong>{ticketStatus.officeName || '-'}</strong></div>
-                <div><span>People Ahead</span><strong>{ticketStatus.peopleAhead ?? '-'}</strong></div>
-                <div><span>Est. Wait</span><strong>{ticketStatus.estimatedWaitMinutes ?? '-'} min</strong></div>
-                <div><span>Position</span><strong>{ticketStatus.position ?? '-'}</strong></div>
-              </div>
-            )}
-
-            <div className="dash-btn-row">
-              <button
-                type="button"
-                className="dash-btn"
-                onClick={() => refreshQueueStatus(activeTicketId)}
-                disabled={!activeTicketId || refreshingStatus}
-              >
-                {refreshingStatus ? 'Refreshing...' : 'Refresh Status'}
-              </button>
-              <button
-                type="button"
-                className="dash-btn dash-btn-danger"
-                onClick={handleCancelTicket}
-                disabled={!activeTicketId || cancelling || ticketStatus?.status !== 'WAITING'}
-              >
-                {cancelling ? 'Cancelling...' : 'Cancel Ticket'}
-              </button>
-            </div>
-          </div>
+        <div className="portal-btn-row">
+          <button
+            type="button"
+            className="portal-btn"
+            onClick={() => refreshQueueStatus(activeTicketId)}
+            disabled={!activeTicketId || refreshingStatus}
+          >
+            {refreshingStatus ? 'Refreshing...' : 'Refresh Status'}
+          </button>
+          <button
+            type="button"
+            className="portal-btn portal-btn-danger"
+            onClick={handleCancelTicket}
+            disabled={!activeTicketId || cancelling || ticketStatus?.status !== 'WAITING'}
+          >
+            {cancelling ? 'Cancelling...' : 'Cancel Ticket'}
+          </button>
         </div>
       </div>
     </div>

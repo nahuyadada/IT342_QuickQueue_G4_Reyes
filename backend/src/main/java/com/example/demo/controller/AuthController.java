@@ -115,6 +115,11 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<?>> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
-        return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Authenticated")));
+        try {
+            return ResponseEntity.ok(ApiResponse.success(authService.getCurrentUserProfile(authHeader)));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("AUTH-001", e.getMessage()));
+        }
     }
 }

@@ -1,8 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
 import AuthCallback from './pages/AuthCallback';
-import Dashboard from './pages/Dashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import UserPortalLayout from './pages/UserPortalLayout';
+import HomePage from './pages/HomePage';
+import MapViewPage from './pages/MapViewPage';
+import ActiveQueuesPage from './pages/ActiveQueuesPage';
+import ProfilePage from './pages/ProfilePage';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const token = localStorage.getItem('token');
@@ -13,6 +17,8 @@ function ProtectedRoute({ children, adminOnly = false }) {
 }
 
 function App() {
+  const token = localStorage.getItem('token');
+
   return (
     <BrowserRouter>
       <Routes>
@@ -22,10 +28,16 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <UserPortalLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route index element={<Navigate to="home" replace />} />
+          <Route path="home" element={<HomePage />} />
+          <Route path="map" element={<MapViewPage />} />
+          <Route path="queues" element={<ActiveQueuesPage />} />
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
         <Route
           path="/admin/dashboard"
           element={
@@ -34,7 +46,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to={token ? '/dashboard/home' : '/'} replace />} />
       </Routes>
     </BrowserRouter>
   );

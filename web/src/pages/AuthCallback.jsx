@@ -7,6 +7,7 @@ export default function AuthCallback() {
     try {
       const searchParams = new URLSearchParams(window.location.search);
       const error = searchParams.get('error');
+      const id = searchParams.get('id');
       const token = searchParams.get('token');
       const name = searchParams.get('name');
       const email = searchParams.get('email');
@@ -33,13 +34,14 @@ export default function AuthCallback() {
 
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify({
+        id: id ? Number(id) : null,
         name: name || 'User',
         email: email || '',
         role,
       }));
 
       setStatus('Sign-in successful. Redirecting...');
-      window.location.replace(role === 'ADMIN' ? '/admin/dashboard' : '/dashboard');
+      window.location.replace(role === 'ADMIN' ? '/admin/dashboard' : '/dashboard/home');
     } catch (err) {
       console.error(err);
       setStatus('Unexpected callback error. Returning to login...');
