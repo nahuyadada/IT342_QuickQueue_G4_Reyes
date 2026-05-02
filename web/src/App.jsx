@@ -1,12 +1,22 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import AuthPage from './pages/AuthPage';
-import AuthCallback from './pages/AuthCallback';
-import AdminDashboard from './pages/AdminDashboard';
-import UserPortalLayout from './pages/UserPortalLayout';
-import HomePage from './pages/HomePage';
-import MapViewPage from './pages/MapViewPage';
-import ActiveQueuesPage from './pages/ActiveQueuesPage';
-import ProfilePage from './pages/ProfilePage';
+
+// Auth feature
+import AuthPage from './features/auth/AuthPage';
+import AuthCallback from './features/auth/AuthCallback';
+
+// Admin feature
+import AdminDashboard from './features/admin/AdminDashboard';
+
+// Queue feature
+import HomePage from './features/queue/HomePage';
+import MapViewPage from './features/queue/MapViewPage';
+import ActiveQueuesPage from './features/queue/ActiveQueuesPage';
+
+// Profile feature
+import ProfilePage from './features/profile/ProfilePage';
+
+// Shared layout
+import UserPortalLayout from './shared/UserPortalLayout';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const token = localStorage.getItem('token');
