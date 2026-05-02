@@ -126,7 +126,7 @@ export default function AuthPage() {
 
   const persistAuth = (data) => {
     localStorage.setItem('token', data.token);
-    localStorage.setItem('user', JSON.stringify({ name: data.name, email: data.email, role: data.role }));
+    localStorage.setItem('user', JSON.stringify({ id: data.id, name: data.name, email: data.email, role: data.role }));
   };
 
   const handleLogin = async (e) => {
@@ -140,7 +140,7 @@ export default function AuthPage() {
     try {
       const data = await login(loginEmail, loginPassword);
       persistAuth(data);
-      navigate('/dashboard');
+      navigate(data.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard/home');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -168,7 +168,7 @@ export default function AuthPage() {
       const data = await register(signupName, signupEmail, signupPassword);
       persistAuth(data);
       setSuccess('Account created successfully! Redirecting...');
-      setTimeout(() => navigate('/dashboard'), 1500);
+      setTimeout(() => navigate('/dashboard/home'), 1500);
     } catch (err) {
       setError(err.message);
     } finally {

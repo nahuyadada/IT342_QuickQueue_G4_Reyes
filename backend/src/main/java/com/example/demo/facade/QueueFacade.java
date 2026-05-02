@@ -1,5 +1,6 @@
 package com.example.demo.facade;
 
+import com.example.demo.dto.OfficeRegistrationRequest;
 import com.example.demo.factory.QueueTicketFactory;
 import com.example.demo.model.QueueTicket;
 import com.example.demo.model.ServiceOffice;
@@ -167,10 +168,103 @@ public class QueueFacade {
      * List all active service offices.
      */
     public List<ServiceOffice> getActiveOffices() {
-        return officeRepository.findByIsActiveTrue();
+        return officeRepository.findByIsActiveTrueAndApprovalStatus(ServiceOffice.ApprovalStatus.APPROVED);
+    }
+
+    /**
+     * Register a new business/service office for queue operations.
+     */
+    public Map<String, Object> registerOffice(Long ownerUserId, OfficeRegistrationRequest request) {
+        String name = request.getName() == null ? "" : request.getName().trim();
+        String address = request.getAddress() == null ? "" : request.getAddress().trim();
+        String type = request.getType() == null ? "" : request.getType().trim().toUpperCase();
+
+        if (name.isBlank()) {
+            throw new RuntimeException("Business/office name is required");
+        }
+        if (address.isBlank()) {
+            throw new RuntimeException("Business address is required");
+        }
+        if (type.isBlank()) {
+            throw new RuntimeException("Business type is required");
+        }
+
+        if (officeRepository.existsByNameIgnoreCaseAndAddressIgnoreCase(name, address)) {
+            throw new RuntimeException("This business office is already registered");
+        }
+
+        ServiceOffice office = ServiceOffice.builder()
+                .name(name)
+                .address(address)
+                .type(type)
+                .ownerUserId(ownerUserId)
+            .isActive(false)
+            .approvalStatus(ServiceOffice.ApprovalStatus.PENDING)
+                .build();
+
+        ServiceOffice savedOffice = officeRepository.save(office);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("officeId", savedOffice.getId());
+        response.put("name", savedOffice.getName());
+        response.put("address", savedOffice.getAddress());
+        response.put("type", savedOffice.getType());
+        response.put("ownerUserId", savedOffice.getOwnerUserId());
+        response.put("approvalStatus", savedOffice.getApprovalStatus().name());
+        response.put("isActive", savedOffice.isActive());
+        response.put("createdAt", savedOffice.getCreatedAt().toString());
+        return response;
+    }
+
+    public List<Map<String, Object>> getPendingOfficeRegistrations() {
+        return officeRepository.findByApprovalStatusOrderByCreatedAtAsc(ServiceOffice.ApprovalStatus.PENDING)
+                .stream()
+                .map(this::buildOfficeResponse)
+                .toList();
+    }
+
+    public Map<String, Object> approveOfficeRegistration(Long officeId) {
+        ServiceOffice office = officeRepository.findById(officeId)
+                .orElseThrow(() -> new RuntimeException("Office registration not found"));
+
+        if (office.getApprovalStatus() != ServiceOffice.ApprovalStatus.PENDING) {
+            throw new RuntimeException("Only pending registrations can be approved");
+        }
+
+        office.setApprovalStatus(ServiceOffice.ApprovalStatus.APPROVED);
+        office.setActive(true);
+        ServiceOffice savedOffice = officeRepository.save(office);
+        return buildOfficeResponse(savedOffice);
+    }
+
+    public Map<String, Object> rejectOfficeRegistration(Long officeId) {
+        ServiceOffice office = officeRepository.findById(officeId)
+                .orElseThrow(() -> new RuntimeException("Office registration not found"));
+
+        if (office.getApprovalStatus() != ServiceOffice.ApprovalStatus.PENDING) {
+            throw new RuntimeException("Only pending registrations can be rejected");
+        }
+
+        office.setApprovalStatus(ServiceOffice.ApprovalStatus.REJECTED);
+        office.setActive(false);
+        ServiceOffice savedOffice = officeRepository.save(office);
+        return buildOfficeResponse(savedOffice);
     }
 
     // ── Private Helpers ──────────────────────────────────────────────
+
+    private Map<String, Object> buildOfficeResponse(ServiceOffice office) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("officeId", office.getId());
+        response.put("name", office.getName());
+        response.put("address", office.getAddress());
+        response.put("type", office.getType());
+        response.put("ownerUserId", office.getOwnerUserId());
+        response.put("approvalStatus", office.getApprovalStatus().name());
+        response.put("isActive", office.isActive());
+        response.put("createdAt", office.getCreatedAt().toString());
+        return response;
+    }
 
     private Map<String, Object> buildTicketResponse(QueueTicket ticket, ServiceOffice office) {
         Map<String, Object> response = new HashMap<>();

@@ -9,5 +9,8 @@ import java.util.List;
 @Repository
 public interface ServiceOfficeRepository extends JpaRepository<ServiceOffice, Long> {
     List<ServiceOffice> findByIsActiveTrue();
+    List<ServiceOffice> findByIsActiveTrueAndApprovalStatus(ServiceOffice.ApprovalStatus approvalStatus);
     List<ServiceOffice> findByType(String type);
+    List<ServiceOffice> findByApprovalStatusOrderByCreatedAtAsc(ServiceOffice.ApprovalStatus approvalStatus);
+    boolean existsByNameIgnoreCaseAndAddressIgnoreCase(String name, String address);
 }

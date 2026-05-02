@@ -19,6 +19,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -156,6 +157,52 @@ public class AuthService {
         return googleClientId;
     }
 
+    public Map<String, Object> getCurrentUserProfile(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization header is missing or invalid");
+        }
+
+        String token = authHeader.substring(7);
+        String email = jwtService.extractUsername(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return Map.of(
+                "id", user.getId(),
+                "name", user.getName(),
+                "email", user.getEmail(),
+                "role", user.getRole().name()
+        );
+    }
+
+    public Map<String, Object> updateCurrentUserName(String authHeader, String newName) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization header is missing or invalid");
+        }
+
+        String name = newName == null ? "" : newName.trim();
+        if (name.isBlank()) {
+            throw new RuntimeException("Name is required");
+        }
+
+        String token = authHeader.substring(7);
+        String email = jwtService.extractUsername(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setName(name);
+        User savedUser = userRepository.save(user);
+
+        return Map.of(
+                "id", savedUser.getId(),
+                "name", savedUser.getName(),
+                "email", savedUser.getEmail(),
+                "role", savedUser.getRole().name()
+        );
+    }
+
     // ── Private Helpers ──────────────────────────────────────────────
 
     private User upsertGoogleUser(String email, String name) {
@@ -196,6 +243,7 @@ public class AuthService {
         String token = jwtService.generateToken(userDetails);
 
         return AuthResponse.builder()
+                .id(user.getId())
                 .token(token)
                 .name(user.getName())
                 .email(user.getEmail())

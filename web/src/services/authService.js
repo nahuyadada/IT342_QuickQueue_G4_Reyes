@@ -26,3 +26,11 @@ export const getGoogleClientId = async () => {
 export const googleLogin = async (credential) => {
   return apiClient.post('/auth/google', { credential });
 };
+
+export const getCurrentUserProfile = async () => {
+  return apiClient.get('/auth/me');
+};
+
+export const updateCurrentUserProfile = async ({ name }) => {
+  return apiClient.patch('/auth/me', { name });
+};
