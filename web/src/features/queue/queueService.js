@@ -46,6 +46,32 @@ export const rejectOfficeRegistration = async (officeId) => {
   return apiClient.patch(`/admin/offices/registrations/${officeId}/reject`);
 };
 
+export const getMyRegistrations = async () => {
+  return apiClient.get('/offices/my-registrations');
+};
+
+export const toggleOffice = async (officeId) => {
+  return apiClient.patch(`/offices/${officeId}/toggle`);
+};
+
+// ── Staff Management ──
+
+export const getOfficeStaff = async (officeId) => {
+  return apiClient.get(`/offices/${officeId}/staff`);
+};
+
+export const addOfficeStaff = async (officeId, email) => {
+  return apiClient.post(`/offices/${officeId}/staff`, { email });
+};
+
+export const removeOfficeStaff = async (officeId, staffId) => {
+  return apiClient.delete(`/offices/${officeId}/staff/${staffId}`);
+};
+
+export const getStaffOffices = async () => {
+  return apiClient.get('/offices/staff-offices');
+};
+
 export const getHolidays = async (country = 'PH', year = 2026) => {
   return apiClient.get(`/integration/holidays?country=${country}&year=${year}`);
 };

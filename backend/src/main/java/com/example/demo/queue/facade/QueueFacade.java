@@ -1,7 +1,11 @@
 package com.example.demo.queue.facade;
 
+import com.example.demo.auth.model.User;
+import com.example.demo.auth.repository.UserRepository;
 import com.example.demo.office.dto.OfficeRegistrationRequest;
+import com.example.demo.office.model.OfficeStaff;
 import com.example.demo.office.model.ServiceOffice;
+import com.example.demo.office.repository.OfficeStaffRepository;
 import com.example.demo.office.repository.ServiceOfficeRepository;
 import com.example.demo.queue.factory.QueueTicketFactory;
 import com.example.demo.queue.model.QueueTicket;
@@ -24,6 +28,8 @@ import java.util.Map;
  *   - QueueService (persistence & queries)
  *   - ServiceOfficeRepository (office validation)
  *   - QueueEventPublisher (notifications via Observer pattern)
+ *   - OfficeStaffRepository (staff management)
+ *   - UserRepository (user lookups for staff by email)
  *
  * Controllers call the Facade instead of interacting with each subsystem directly.
  * This hides the complexity of multi-step queue operations behind simple method calls.
@@ -36,6 +42,8 @@ public class QueueFacade {
     private final QueueService queueService;
     private final ServiceOfficeRepository officeRepository;
     private final QueueEventPublisher eventPublisher;
+    private final OfficeStaffRepository officeStaffRepository;
+    private final UserRepository userRepository;
 
     /**
      * Join a queue: validate office → create ticket → save → notify → return status.
@@ -260,6 +268,140 @@ public class QueueFacade {
         return buildOfficeResponse(savedOffice);
     }
 
+    /**
+     * Get all office registrations owned by a specific user.
+     */
+    public List<Map<String, Object>> getMyRegistrations(Long ownerUserId) {
+        return officeRepository.findByOwnerUserIdOrderByCreatedAtDesc(ownerUserId)
+                .stream()
+                .map(this::buildOfficeResponse)
+                .toList();
+    }
+
+    /**
+     * Toggle office active/inactive (open/close for business).
+     * Allowed for the owner OR any staff member of the office.
+     */
+    public Map<String, Object> toggleOfficeActive(Long officeId, Long userId) {
+        ServiceOffice office = officeRepository.findById(officeId)
+                .orElseThrow(() -> new RuntimeException("Office not found"));
+
+        if (!isOwnerOrStaff(office, userId)) {
+            throw new RuntimeException("You do not have permission to manage this office");
+        }
+
+        if (office.getApprovalStatus() != ServiceOffice.ApprovalStatus.APPROVED) {
+            throw new RuntimeException("Only approved offices can be opened/closed");
+        }
+
+        office.setActive(!office.isActive());
+        ServiceOffice saved = officeRepository.save(office);
+
+        eventPublisher.publish(new QueueEvent(
+                QueueEvent.EventType.TICKET_CREATED,
+                null,
+                userId,
+                officeId,
+                "Office " + saved.getName() + " is now " + (saved.isActive() ? "OPEN" : "CLOSED")
+        ));
+
+        return buildOfficeResponse(saved);
+    }
+
+    // ── Staff Management ─────────────────────────────────────────────
+
+    /**
+     * Add a staff member to an office by email.
+     * Only the office owner can add staff.
+     */
+    public Map<String, Object> addStaff(Long officeId, Long ownerUserId, String staffEmail) {
+        ServiceOffice office = officeRepository.findById(officeId)
+                .orElseThrow(() -> new RuntimeException("Office not found"));
+
+        if (!office.getOwnerUserId().equals(ownerUserId)) {
+            throw new RuntimeException("Only the owner can add staff");
+        }
+
+        User staffUser = userRepository.findByEmail(staffEmail.trim().toLowerCase())
+                .orElseThrow(() -> new RuntimeException("No user found with email: " + staffEmail));
+
+        if (staffUser.getId().equals(ownerUserId)) {
+            throw new RuntimeException("You are already the owner of this office");
+        }
+
+        if (officeStaffRepository.existsByOfficeIdAndUserId(officeId, staffUser.getId())) {
+            throw new RuntimeException("This user is already a staff member");
+        }
+
+        OfficeStaff staff = OfficeStaff.builder()
+                .officeId(officeId)
+                .userId(staffUser.getId())
+                .userName(staffUser.getName())
+                .userEmail(staffUser.getEmail())
+                .role(OfficeStaff.StaffRole.STAFF)
+                .build();
+
+        OfficeStaff saved = officeStaffRepository.save(staff);
+        return buildStaffResponse(saved);
+    }
+
+    /**
+     * Remove a staff member from an office.
+     * Only the office owner can remove staff.
+     */
+    public void removeStaff(Long officeId, Long ownerUserId, Long staffRecordId) {
+        ServiceOffice office = officeRepository.findById(officeId)
+                .orElseThrow(() -> new RuntimeException("Office not found"));
+
+        if (!office.getOwnerUserId().equals(ownerUserId)) {
+            throw new RuntimeException("Only the owner can remove staff");
+        }
+
+        OfficeStaff staff = officeStaffRepository.findById(staffRecordId)
+                .orElseThrow(() -> new RuntimeException("Staff record not found"));
+
+        if (!staff.getOfficeId().equals(officeId)) {
+            throw new RuntimeException("Staff record does not belong to this office");
+        }
+
+        officeStaffRepository.delete(staff);
+    }
+
+    /**
+     * Get all staff members for an office.
+     */
+    public List<Map<String, Object>> getOfficeStaff(Long officeId) {
+        return officeStaffRepository.findByOfficeIdOrderByAddedAtAsc(officeId)
+                .stream()
+                .map(this::buildStaffResponse)
+                .toList();
+    }
+
+    /**
+     * Get all offices where a user is staff (not owner).
+     */
+    public List<Map<String, Object>> getStaffOffices(Long userId) {
+        return officeStaffRepository.findByUserIdOrderByAddedAtDesc(userId)
+                .stream()
+                .map(staffRecord -> {
+                    ServiceOffice office = officeRepository.findById(staffRecord.getOfficeId()).orElse(null);
+                    if (office == null) return null;
+                    Map<String, Object> resp = buildOfficeResponse(office);
+                    resp.put("staffRole", staffRecord.getRole().name());
+                    return resp;
+                })
+                .filter(r -> r != null)
+                .toList();
+    }
+
+    /**
+     * Check if a user is the owner or a staff member of the given office.
+     */
+    public boolean isOwnerOrStaff(ServiceOffice office, Long userId) {
+        if (office.getOwnerUserId().equals(userId)) return true;
+        return officeStaffRepository.existsByOfficeIdAndUserId(office.getId(), userId);
+    }
+
     // ── Private Helpers ──────────────────────────────────────────────
 
     private Map<String, Object> buildOfficeResponse(ServiceOffice office) {
@@ -295,6 +437,18 @@ public class QueueFacade {
         response.put("officeName", office.getName());
         response.put("officeType", office.getType());
         response.put("createdAt", ticket.getCreatedAt().toString());
+        return response;
+    }
+
+    private Map<String, Object> buildStaffResponse(OfficeStaff staff) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", staff.getId());
+        response.put("officeId", staff.getOfficeId());
+        response.put("userId", staff.getUserId());
+        response.put("userName", staff.getUserName());
+        response.put("userEmail", staff.getUserEmail());
+        response.put("role", staff.getRole().name());
+        response.put("addedAt", staff.getAddedAt().toString());
         return response;
     }
 }

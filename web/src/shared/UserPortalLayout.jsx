@@ -36,6 +36,9 @@ export default function UserPortalLayout() {
           <NavLink to="/dashboard/queues" className={({ isActive }) => `portal-nav-link ${isActive ? 'active' : ''}`}>
             Active Queues
           </NavLink>
+          <NavLink to="/dashboard/my-registrations" className={({ isActive }) => `portal-nav-link ${isActive ? 'active' : ''}`}>
+            My Businesses
+          </NavLink>
           <NavLink to="/dashboard/profile" className={({ isActive }) => `portal-nav-link ${isActive ? 'active' : ''}`}>
             Profile
           </NavLink>

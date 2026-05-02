@@ -12,6 +12,8 @@ import HomePage from './features/queue/HomePage';
 import MapViewPage from './features/queue/MapViewPage';
 import ActiveQueuesPage from './features/queue/ActiveQueuesPage';
 import BusinessRegistrationPage from './features/queue/BusinessRegistrationPage';
+import MyRegistrationsPage from './features/queue/MyRegistrationsPage';
+import BusinessDashboardPage from './features/queue/BusinessDashboardPage';
 
 // Profile feature
 import ProfilePage from './features/profile/ProfilePage';
@@ -48,6 +50,8 @@ function App() {
           <Route path="map" element={<MapViewPage />} />
           <Route path="queues" element={<ActiveQueuesPage />} />
           <Route path="register-business" element={<BusinessRegistrationPage />} />
+          <Route path="my-registrations" element={<MyRegistrationsPage />} />
+          <Route path="business/:officeId" element={<BusinessDashboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
         <Route

@@ -444,7 +444,7 @@
   }
 
   .portal-nav {
-    grid-template-columns: repeat(4, minmax(130px, 1fr));
+    grid-template-columns: repeat(5, minmax(110px, 1fr));
     width: 100%;
   }
 

@@ -12,5 +12,6 @@ public interface ServiceOfficeRepository extends JpaRepository<ServiceOffice, Lo
     List<ServiceOffice> findByIsActiveTrueAndApprovalStatus(ServiceOffice.ApprovalStatus approvalStatus);
     List<ServiceOffice> findByType(String type);
     List<ServiceOffice> findByApprovalStatusOrderByCreatedAtAsc(ServiceOffice.ApprovalStatus approvalStatus);
+    List<ServiceOffice> findByOwnerUserIdOrderByCreatedAtDesc(Long ownerUserId);
     boolean existsByNameIgnoreCaseAndAddressIgnoreCase(String name, String address);
 }
