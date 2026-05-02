@@ -1,19 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile } from '../auth/authService';
-import { getOffices, joinQueue, registerOffice } from './queueService';
+import { getOffices, joinQueue } from './queueService';
 
 export default function MapViewPage() {
+  const navigate = useNavigate();
   const [offices, setOffices] = useState([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showRegisterForm, setShowRegisterForm] = useState(false);
-  const [registering, setRegistering] = useState(false);
-  const [registrationMessage, setRegistrationMessage] = useState('');
-  const [registrationError, setRegistrationError] = useState('');
-  const [businessName, setBusinessName] = useState('');
-  const [businessAddress, setBusinessAddress] = useState('');
-  const [businessType, setBusinessType] = useState('');
   const [selectedOfficeId, setSelectedOfficeId] = useState(null);
   const [joiningOfficeId, setJoiningOfficeId] = useState(null);
   const [officeToConfirm, setOfficeToConfirm] = useState(null);
@@ -44,48 +39,6 @@ export default function MapViewPage() {
   }, [offices, query]);
 
   const selectedOffice = offices.find((office) => office.id === selectedOfficeId) || null;
-
-  const openRegisterForm = () => {
-    setRegistrationMessage('');
-    setRegistrationError('');
-    setShowRegisterForm(true);
-  };
-
-  const closeRegisterForm = () => {
-    if (registering) return;
-    setShowRegisterForm(false);
-  };
-
-  const handleRegisterBusiness = async (e) => {
-    e.preventDefault();
-    setRegistrationMessage('');
-    setRegistrationError('');
-
-    if (!businessName.trim() || !businessAddress.trim() || !businessType.trim()) {
-      setRegistrationError('Please complete all fields.');
-      return;
-    }
-
-    setRegistering(true);
-    try {
-      const office = await registerOffice({
-        name: businessName,
-        address: businessAddress,
-        type: businessType,
-      });
-
-      setRegistrationMessage(`Registered successfully: ${office.name}`);
-      setBusinessName('');
-      setBusinessAddress('');
-      setBusinessType('');
-      await loadOffices();
-      setShowRegisterForm(false);
-    } catch (err) {
-      setRegistrationError(err.message || 'Unable to register business.');
-    } finally {
-      setRegistering(false);
-    }
-  };
 
   const resolveUserProfile = async () => {
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -144,7 +97,6 @@ export default function MapViewPage() {
   return (
     <div className="portal-grid portal-grid-map">
       {error && <div className="portal-alert portal-alert-error">{error}</div>}
-      {registrationMessage && <div className="portal-alert portal-alert-success">{registrationMessage}</div>}
       {queueMessage && <div className="portal-alert portal-alert-success">{queueMessage}</div>}
       {queueError && <div className="portal-alert portal-alert-error">{queueError}</div>}
 
@@ -191,8 +143,12 @@ export default function MapViewPage() {
       <div className="portal-panel">
         <div className="portal-panel-head">
           <h3>Registered Offices</h3>
-          <button type="button" className="portal-btn portal-btn-primary" onClick={openRegisterForm}>
-            Register
+          <button
+            type="button"
+            className="portal-btn portal-btn-primary"
+            onClick={() => navigate('/dashboard/register-business')}
+          >
+            Register Your Business
           </button>
         </div>
         <div className="portal-list">
@@ -213,50 +169,6 @@ export default function MapViewPage() {
           {filtered.length === 0 && <p className="portal-muted">No offices to display.</p>}
         </div>
       </div>
-
-      {showRegisterForm && (
-        <div className="portal-modal-backdrop" role="dialog" aria-modal="true">
-          <div className="portal-modal">
-            <h3>Register Business</h3>
-            <p className="portal-muted">Fill out the form to register your office.</p>
-
-            {registrationError && <div className="portal-alert portal-alert-error">{registrationError}</div>}
-
-            <form className="portal-controls" onSubmit={handleRegisterBusiness}>
-              <input
-                className="portal-input"
-                type="text"
-                placeholder="Business / Office Name"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-              />
-              <input
-                className="portal-input"
-                type="text"
-                placeholder="Business Address"
-                value={businessAddress}
-                onChange={(e) => setBusinessAddress(e.target.value)}
-              />
-              <input
-                className="portal-input"
-                type="text"
-                placeholder="Business Type (e.g. CLINIC, BANK, SALON)"
-                value={businessType}
-                onChange={(e) => setBusinessType(e.target.value)}
-              />
-
-              <div className="portal-btn-row">
-                <button type="button" className="portal-btn" onClick={closeRegisterForm} disabled={registering}>
-                  Cancel
-                </button>
-                <button type="submit" className="portal-btn portal-btn-primary" disabled={registering}>
-                  {registering ? 'Registering...' : 'Submit'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {officeToConfirm && (
         <div className="portal-modal-backdrop" role="dialog" aria-modal="true">

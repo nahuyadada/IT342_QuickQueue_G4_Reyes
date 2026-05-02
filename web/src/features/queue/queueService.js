@@ -30,8 +30,8 @@ export const getOffices = async () => {
   return apiClient.get('/offices');
 };
 
-export const registerOffice = async ({ name, address, type }) => {
-  return apiClient.post('/offices/register', { name, address, type });
+export const registerOffice = async (data) => {
+  return apiClient.post('/offices/register', data);
 };
 
 export const getPendingOfficeRegistrations = async () => {

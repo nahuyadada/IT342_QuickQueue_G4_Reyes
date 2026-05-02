@@ -178,6 +178,8 @@ public class QueueFacade {
         String name = request.getName() == null ? "" : request.getName().trim();
         String address = request.getAddress() == null ? "" : request.getAddress().trim();
         String type = request.getType() == null ? "" : request.getType().trim().toUpperCase();
+        String category = request.getCategory() == null ? "" : request.getCategory().trim();
+        String phoneNumber = request.getPhoneNumber() == null ? "" : request.getPhoneNumber().trim();
 
         if (name.isBlank()) {
             throw new RuntimeException("Business/office name is required");
@@ -188,6 +190,12 @@ public class QueueFacade {
         if (type.isBlank()) {
             throw new RuntimeException("Business type is required");
         }
+        if (category.isBlank()) {
+            throw new RuntimeException("Business category is required");
+        }
+        if (phoneNumber.isBlank()) {
+            throw new RuntimeException("Phone number is required");
+        }
 
         if (officeRepository.existsByNameIgnoreCaseAndAddressIgnoreCase(name, address)) {
             throw new RuntimeException("This business office is already registered");
@@ -197,23 +205,24 @@ public class QueueFacade {
                 .name(name)
                 .address(address)
                 .type(type)
+                .category(category)
+                .phoneNumber(phoneNumber)
+                .website(request.getWebsite() != null ? request.getWebsite().trim() : null)
+                .businessHours(request.getBusinessHours() != null ? request.getBusinessHours().trim() : null)
+                .photos(request.getPhotos() != null ? request.getPhotos().trim() : null)
+                .businessPermit(request.getBusinessPermit() != null ? request.getBusinessPermit().trim() : null)
+                .dtiSecRegistration(request.getDtiSecRegistration() != null ? request.getDtiSecRegistration().trim() : null)
+                .utilityBill(request.getUtilityBill() != null ? request.getUtilityBill().trim() : null)
+                .leaseAgreement(request.getLeaseAgreement() != null ? request.getLeaseAgreement().trim() : null)
+                .taxDocument(request.getTaxDocument() != null ? request.getTaxDocument().trim() : null)
+                .additionalNotes(request.getAdditionalNotes() != null ? request.getAdditionalNotes().trim() : null)
                 .ownerUserId(ownerUserId)
-            .isActive(false)
-            .approvalStatus(ServiceOffice.ApprovalStatus.PENDING)
+                .isActive(false)
+                .approvalStatus(ServiceOffice.ApprovalStatus.PENDING)
                 .build();
 
         ServiceOffice savedOffice = officeRepository.save(office);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("officeId", savedOffice.getId());
-        response.put("name", savedOffice.getName());
-        response.put("address", savedOffice.getAddress());
-        response.put("type", savedOffice.getType());
-        response.put("ownerUserId", savedOffice.getOwnerUserId());
-        response.put("approvalStatus", savedOffice.getApprovalStatus().name());
-        response.put("isActive", savedOffice.isActive());
-        response.put("createdAt", savedOffice.getCreatedAt().toString());
-        return response;
+        return buildOfficeResponse(savedOffice);
     }
 
     public List<Map<String, Object>> getPendingOfficeRegistrations() {
@@ -259,6 +268,17 @@ public class QueueFacade {
         response.put("name", office.getName());
         response.put("address", office.getAddress());
         response.put("type", office.getType());
+        response.put("category", office.getCategory());
+        response.put("phoneNumber", office.getPhoneNumber());
+        response.put("website", office.getWebsite());
+        response.put("businessHours", office.getBusinessHours());
+        response.put("photos", office.getPhotos());
+        response.put("businessPermit", office.getBusinessPermit());
+        response.put("dtiSecRegistration", office.getDtiSecRegistration());
+        response.put("utilityBill", office.getUtilityBill());
+        response.put("leaseAgreement", office.getLeaseAgreement());
+        response.put("taxDocument", office.getTaxDocument());
+        response.put("additionalNotes", office.getAdditionalNotes());
         response.put("ownerUserId", office.getOwnerUserId());
         response.put("approvalStatus", office.getApprovalStatus().name());
         response.put("isActive", office.isActive());

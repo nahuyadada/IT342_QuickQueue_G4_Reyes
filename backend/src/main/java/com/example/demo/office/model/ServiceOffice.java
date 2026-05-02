@@ -32,6 +32,45 @@ public class ServiceOffice {
     @Column
     private Long ownerUserId;
 
+    // ── New registration fields ──
+
+    @Column
+    private String category; // restaurant, salon, repair shop, etc.
+
+    @Column
+    private String phoneNumber;
+
+    @Column
+    private String website; // optional: website or social media page
+
+    @Column(length = 1000)
+    private String businessHours; // JSON or text format of hours
+
+    @Column(length = 2000)
+    private String photos; // comma-separated photo filenames or URLs
+
+    // ── Verification documents ──
+
+    @Column
+    private String businessPermit; // filename of uploaded permit
+
+    @Column
+    private String dtiSecRegistration; // DTI/SEC registration document
+
+    @Column
+    private String utilityBill; // utility bill document
+
+    @Column
+    private String leaseAgreement; // lease agreement document
+
+    @Column
+    private String taxDocument; // tax document
+
+    @Column(length = 1000)
+    private String additionalNotes; // optional notes from applicant
+
+    // ── Status fields ──
+
     @Builder.Default
     @Column(nullable = false)
     private boolean isActive = true;
