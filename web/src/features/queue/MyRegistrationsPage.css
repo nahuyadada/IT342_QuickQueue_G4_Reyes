@@ -1,0 +1,283 @@
+/* ═══════════════════════════════════════════════════════════
+   My Registrations Page Styles
+   ═══════════════════════════════════════════════════════════ */
+
+.myreg-root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.myreg-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.myreg-header h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+/* ── Notification Banner ── */
+
+.myreg-notification {
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  border: 1px solid #6ee7b7;
+  border-radius: 14px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  animation: myregSlideIn 0.4s ease;
+}
+
+@keyframes myregSlideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.myreg-notification-icon {
+  font-size: 36px;
+  flex-shrink: 0;
+}
+
+.myreg-notification-content {
+  flex: 1;
+}
+
+.myreg-notification-content strong {
+  font-size: 16px;
+  color: #065f46;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.myreg-notification-content p {
+  font-size: 13px;
+  color: #047857;
+  margin: 0;
+}
+
+.myreg-notification-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ── Loading & Empty States ── */
+
+.myreg-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.myreg-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #e5e7eb;
+  border-top-color: #111827;
+  border-radius: 50%;
+  animation: myregSpin 0.7s linear infinite;
+  margin: 0 auto 12px;
+}
+
+@keyframes myregSpin {
+  to { transform: rotate(360deg); }
+}
+
+.myreg-empty {
+  text-align: center;
+  padding: 60px 20px;
+  background: #fff;
+  border: 2px dashed #d1d5db;
+  border-radius: 14px;
+}
+
+.myreg-empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.myreg-empty h3 {
+  font-size: 18px;
+  color: #111827;
+  margin: 0 0 6px;
+}
+
+.myreg-empty p {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0 0 20px;
+}
+
+/* ── Card Grid ── */
+
+.myreg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 500px) {
+  .myreg-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.myreg-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+
+.myreg-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.07);
+}
+
+.myreg-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 20px 0;
+}
+
+.myreg-card-header h3 {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.myreg-category {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.myreg-status-badge {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.myreg-card-body {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.myreg-info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.myreg-info-row > span:first-child {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+}
+
+.myreg-open {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.myreg-closed {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.myreg-card-footer {
+  padding: 14px 20px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.myreg-manage-btn {
+  width: 100%;
+  text-align: center;
+  justify-content: center;
+}
+
+.myreg-pending-msg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #92400e;
+  background: #fffbeb;
+  padding: 10px 14px;
+  border-radius: 8px;
+}
+
+.myreg-pending-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #f59e0b;
+  animation: myregPulse 1.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes myregPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.myreg-rejected-msg {
+  font-size: 13px;
+  color: #991b1b;
+  background: #fef2f2;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin: 0;
+}
+
+/* ── Staff Offices Section ── */
+
+.myreg-section-divider {
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 2px solid #e5e7eb;
+}
+
+.myreg-section-divider h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.myreg-card-staff {
+  border-color: #c7d2fe;
+  border-left: 4px solid #818cf8;
+}
+
+.myreg-staff-badge {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #dbeafe;
+  color: #1d4ed8;
+  white-space: nowrap;
+}

@@ -1,7 +1,7 @@
 package com.example.demo.security;
 
-import com.example.demo.dto.AuthResponse;
-import com.example.demo.service.AuthService;
+import com.example.demo.auth.dto.AuthResponse;
+import com.example.demo.auth.service.AuthService;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
