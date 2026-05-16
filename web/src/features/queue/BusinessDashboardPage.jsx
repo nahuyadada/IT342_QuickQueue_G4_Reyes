@@ -39,27 +39,20 @@ export default function BusinessDashboardPage() {
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-  // Mock queue data for demonstration
-  const [queueList] = useState([
-    { id: 1, ticketNumber: 'Q-001', name: 'Juan Dela Cruz', priority: null, status: 'SERVING', joinedAt: '9:02 AM' },
-    { id: 2, ticketNumber: 'Q-002', name: 'Maria Santos', priority: 'PWD', status: 'WAITING', joinedAt: '9:15 AM' },
-    { id: 3, ticketNumber: 'Q-003', name: 'Pedro Reyes', priority: 'ELDERLY', status: 'WAITING', joinedAt: '9:22 AM' },
-    { id: 4, ticketNumber: 'Q-004', name: 'Ana Garcia', priority: null, status: 'WAITING', joinedAt: '9:30 AM' },
-    { id: 5, ticketNumber: 'Q-005', name: 'Rosa Flores', priority: 'PREGNANT', status: 'WAITING', joinedAt: '9:45 AM' },
-    { id: 6, ticketNumber: 'Q-006', name: 'Carlos Mendoza', priority: null, status: 'WAITING', joinedAt: '10:01 AM' },
-  ]);
+  // Queue data — populated from API when backend queue endpoints are connected
+  const [queueList] = useState([]);
 
-  // Mock analytics data
+  // Analytics data — populated from API when backend analytics endpoints are connected
   const analyticsData = useMemo(() => ({
     dailyVolume: [
-      { day: 'Mon', count: 42 }, { day: 'Tue', count: 58 }, { day: 'Wed', count: 35 },
-      { day: 'Thu', count: 65 }, { day: 'Fri', count: 48 }, { day: 'Sat', count: 22 }, { day: 'Sun', count: 0 },
+      { day: 'Mon', count: 0 }, { day: 'Tue', count: 0 }, { day: 'Wed', count: 0 },
+      { day: 'Thu', count: 0 }, { day: 'Fri', count: 0 }, { day: 'Sat', count: 0 }, { day: 'Sun', count: 0 },
     ],
-    avgServiceTime: '8.3 min',
-    totalServedToday: 23,
-    noShowRate: '12%',
-    peakHour: '10:00 AM',
-    avgWaitTime: '14.2 min',
+    avgServiceTime: '—',
+    totalServedToday: 0,
+    noShowRate: '—',
+    peakHour: '—',
+    avgWaitTime: '—',
   }), []);
 
   const loadOffice = async () => {

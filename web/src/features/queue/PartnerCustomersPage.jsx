@@ -6,16 +6,8 @@ export default function PartnerCustomersPage() {
   const office = usePartner();
   const [filter, setFilter] = useState('all');
 
-  const customers = [
-    { id: 1, ticketNumber: 'Q-001', name: 'Juan Dela Cruz', priority: null, status: 'SERVING', joinedAt: '9:02 AM', estimatedWait: 'Now' },
-    { id: 2, ticketNumber: 'Q-002', name: 'Maria Santos', priority: 'PWD', status: 'WAITING', joinedAt: '9:15 AM', estimatedWait: '~5 min' },
-    { id: 3, ticketNumber: 'Q-003', name: 'Pedro Reyes', priority: 'ELDERLY', status: 'WAITING', joinedAt: '9:22 AM', estimatedWait: '~12 min' },
-    { id: 4, ticketNumber: 'Q-004', name: 'Ana Garcia', priority: null, status: 'WAITING', joinedAt: '9:30 AM', estimatedWait: '~20 min' },
-    { id: 5, ticketNumber: 'Q-005', name: 'Rosa Flores', priority: 'PREGNANT', status: 'WAITING', joinedAt: '9:45 AM', estimatedWait: '~28 min' },
-    { id: 6, ticketNumber: 'Q-006', name: 'Carlos Mendoza', priority: null, status: 'WAITING', joinedAt: '10:01 AM', estimatedWait: '~35 min' },
-    { id: 7, ticketNumber: 'Q-007', name: 'Lisa Tan', priority: null, status: 'SERVED', joinedAt: '8:30 AM', estimatedWait: 'Done' },
-    { id: 8, ticketNumber: 'Q-008', name: 'Marco Villanueva', priority: null, status: 'NO_SHOW', joinedAt: '8:45 AM', estimatedWait: '—' },
-  ];
+  // Customer data — populated from API when backend queue endpoints are connected
+  const customers = [];
 
   const filtered = filter === 'all' ? customers : customers.filter(c => {
     if (filter === 'waiting') return c.status === 'WAITING';

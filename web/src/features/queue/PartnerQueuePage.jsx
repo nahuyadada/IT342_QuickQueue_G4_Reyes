@@ -12,15 +12,8 @@ export default function PartnerQueuePage() {
 
   useEffect(() => { setOfficeState(office); }, [office]);
 
-  // Mock queue data
-  const [queueList] = useState([
-    { id: 1, ticketNumber: 'Q-001', name: 'Juan Dela Cruz', priority: null, status: 'SERVING', joinedAt: '9:02 AM' },
-    { id: 2, ticketNumber: 'Q-002', name: 'Maria Santos', priority: 'PWD', status: 'WAITING', joinedAt: '9:15 AM' },
-    { id: 3, ticketNumber: 'Q-003', name: 'Pedro Reyes', priority: 'ELDERLY', status: 'WAITING', joinedAt: '9:22 AM' },
-    { id: 4, ticketNumber: 'Q-004', name: 'Ana Garcia', priority: null, status: 'WAITING', joinedAt: '9:30 AM' },
-    { id: 5, ticketNumber: 'Q-005', name: 'Rosa Flores', priority: 'PREGNANT', status: 'WAITING', joinedAt: '9:45 AM' },
-    { id: 6, ticketNumber: 'Q-006', name: 'Carlos Mendoza', priority: null, status: 'WAITING', joinedAt: '10:01 AM' },
-  ]);
+  // Queue data — populated from API when backend queue endpoints are connected
+  const [queueList] = useState([]);
 
   if (!officeState) return null;
 
@@ -75,11 +68,11 @@ export default function PartnerQueuePage() {
           <span className="bdash-qstat-label">Now Serving</span>
         </div>
         <div className="bdash-qstat">
-          <span className="bdash-qstat-value">23</span>
+          <span className="bdash-qstat-value">0</span>
           <span className="bdash-qstat-label">Served Today</span>
         </div>
         <div className="bdash-qstat">
-          <span className="bdash-qstat-value">14.2 min</span>
+          <span className="bdash-qstat-value">—</span>
           <span className="bdash-qstat-label">Avg Wait</span>
         </div>
       </div>

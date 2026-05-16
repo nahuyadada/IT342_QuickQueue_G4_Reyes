@@ -5,18 +5,19 @@ import './BusinessDashboardPage.css';
 export default function PartnerAnalyticsPage() {
   const office = usePartner();
 
+  // Analytics data — populated from API when backend analytics endpoints are connected
   const data = useMemo(() => ({
     dailyVolume: [
-      { day: 'Mon', count: 42 }, { day: 'Tue', count: 58 }, { day: 'Wed', count: 35 },
-      { day: 'Thu', count: 65 }, { day: 'Fri', count: 48 }, { day: 'Sat', count: 22 }, { day: 'Sun', count: 0 },
+      { day: 'Mon', count: 0 }, { day: 'Tue', count: 0 }, { day: 'Wed', count: 0 },
+      { day: 'Thu', count: 0 }, { day: 'Fri', count: 0 }, { day: 'Sat', count: 0 }, { day: 'Sun', count: 0 },
     ],
-    avgServiceTime: '8.3 min',
-    totalServedToday: 23,
-    noShowRate: '12%',
-    peakHour: '10:00 AM',
-    avgWaitTime: '14.2 min',
-    satisfactionRate: '94%',
-    totalServedWeek: 270,
+    avgServiceTime: '—',
+    totalServedToday: 0,
+    noShowRate: '—',
+    peakHour: '—',
+    avgWaitTime: '—',
+    satisfactionRate: '—',
+    totalServedWeek: 0,
   }), []);
 
   const maxBar = Math.max(...data.dailyVolume.map(d => d.count), 1);
