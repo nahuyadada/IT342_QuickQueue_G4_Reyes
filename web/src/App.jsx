@@ -10,13 +10,20 @@ import AuthCallback from './features/auth/AuthCallback';
 // Admin feature
 import AdminDashboard from './features/admin/AdminDashboard';
 
-// Queue feature
+// Queue feature — Customer
 import HomePage from './features/queue/HomePage';
 import MapViewPage from './features/queue/MapViewPage';
 import ActiveQueuesPage from './features/queue/ActiveQueuesPage';
 import BusinessRegistrationPage from './features/queue/BusinessRegistrationPage';
 import MyRegistrationsPage from './features/queue/MyRegistrationsPage';
 import BusinessDashboardPage from './features/queue/BusinessDashboardPage';
+
+// Queue feature — Partner
+import PendingApplicationPage from './features/queue/PendingApplicationPage';
+import PartnerQueuePage from './features/queue/PartnerQueuePage';
+import PartnerCustomersPage from './features/queue/PartnerCustomersPage';
+import PartnerAnalyticsPage from './features/queue/PartnerAnalyticsPage';
+import PartnerSettingsPage from './features/queue/PartnerSettingsPage';
 
 // Profile feature
 import ProfilePage from './features/profile/ProfilePage';
@@ -61,13 +68,22 @@ function App() {
           }
         >
           <Route index element={<DashboardRedirect />} />
+
+          {/* Customer routes */}
           <Route path="home" element={<HomePage />} />
           <Route path="map" element={<MapViewPage />} />
           <Route path="queues" element={<ActiveQueuesPage />} />
-          <Route path="register-business" element={<BusinessRegistrationPage />} />
           <Route path="my-registrations" element={<MyRegistrationsPage />} />
           <Route path="business/:officeId" element={<BusinessDashboardPage />} />
           <Route path="profile" element={<ProfilePage />} />
+
+          {/* Partner routes */}
+          <Route path="register-business" element={<BusinessRegistrationPage />} />
+          <Route path="pending" element={<PendingApplicationPage />} />
+          <Route path="queue" element={<PartnerQueuePage />} />
+          <Route path="customers" element={<PartnerCustomersPage />} />
+          <Route path="analytics" element={<PartnerAnalyticsPage />} />
+          <Route path="settings" element={<PartnerSettingsPage />} />
         </Route>
 
         {/* Admin dashboard */}
