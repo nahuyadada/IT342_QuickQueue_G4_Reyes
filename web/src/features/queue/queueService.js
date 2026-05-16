@@ -26,6 +26,10 @@ export const advanceQueue = async (officeId) => {
   return apiClient.post(`/queues/advance/${officeId}`);
 };
 
+export const completeTicket = async (ticketId) => {
+  return apiClient.post(`/queues/complete/${ticketId}`);
+};
+
 export const getOffices = async () => {
   return apiClient.get('/offices');
 };

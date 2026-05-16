@@ -23,6 +23,7 @@ public class QueueEvent {
         TICKET_CREATED,
         TURN_APPROACHING,
         NOW_SERVING,
+        TICKET_COMPLETED,
         TICKET_CANCELLED
     }
 }
