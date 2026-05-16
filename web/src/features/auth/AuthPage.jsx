@@ -130,9 +130,12 @@ export default function AuthPage() {
 
   const clearMessages = () => { setError(''); setSuccess(''); };
 
-  const persistAuth = (data) => {
+  const persistAuth = (data, partnerRole = null) => {
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify({ id: data.id, name: data.name, email: data.email, role: data.role }));
+    if (partnerRole) {
+      localStorage.setItem('partnerRole', partnerRole);
+    }
   };
 
   const handleLogin = async (e) => {
@@ -146,7 +149,15 @@ export default function AuthPage() {
     try {
       const data = await login(loginEmail, loginPassword);
       persistAuth(data);
-      navigate(data.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard/home');
+      // Check if this user previously registered as partner
+      const storedPartnerRole = localStorage.getItem('partnerRole');
+      if (data.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else if (storedPartnerRole === 'partner') {
+        navigate('/dashboard/register-business');
+      } else {
+        navigate('/dashboard/home');
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -172,14 +183,14 @@ export default function AuthPage() {
     setLoading(true);
     try {
       const data = await register(signupName, signupEmail, signupPassword);
-      persistAuth(data);
+      persistAuth(data, registerRole);
       setSuccess('Account created successfully! Redirecting...');
 
       // If partner role, redirect to business registration
       if (registerRole === 'partner') {
-        setTimeout(() => navigate('/dashboard/register-business'), 1500);
+        setTimeout(() => navigate('/dashboard/register-business'), 1200);
       } else {
-        setTimeout(() => navigate('/dashboard/home'), 1500);
+        setTimeout(() => navigate('/dashboard/home'), 1200);
       }
     } catch (err) {
       setError(err.message);

@@ -32,6 +32,14 @@ function ProtectedRoute({ children, adminOnly = false }) {
   return children;
 }
 
+function DashboardRedirect() {
+  const partnerRole = localStorage.getItem('partnerRole');
+  if (partnerRole === 'partner') {
+    return <Navigate to="/dashboard/register-business" replace />;
+  }
+  return <Navigate to="/dashboard/home" replace />;
+}
+
 function App() {
   const token = localStorage.getItem('token');
 
@@ -52,7 +60,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="home" replace />} />
+          <Route index element={<DashboardRedirect />} />
           <Route path="home" element={<HomePage />} />
           <Route path="map" element={<MapViewPage />} />
           <Route path="queues" element={<ActiveQueuesPage />} />
