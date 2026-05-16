@@ -171,7 +171,7 @@ export default function BusinessRegistrationPage() {
 
       const result = await registerOffice(data);
       setSuccess(`Business "${result.name}" registered successfully! Your registration is pending admin approval.`);
-      setTimeout(() => navigate('/dashboard/my-registrations'), 2500);
+      setTimeout(() => navigate('/dashboard/pending'), 2500);
     } catch (err) {
       setError(err.message || 'Failed to register business.');
     } finally {

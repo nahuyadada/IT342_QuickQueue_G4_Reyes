@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { login, register } from './authService';
+import { getMyRegistrations } from '../queue/queueService';
 import './AuthPage.css';
 
 /* ── SVG Icon Components ── */
@@ -149,15 +150,30 @@ export default function AuthPage() {
     try {
       const data = await login(loginEmail, loginPassword);
       persistAuth(data);
-      // Check if this user previously registered as partner
-      const storedPartnerRole = localStorage.getItem('partnerRole');
+
       if (data.role === 'ADMIN') {
         navigate('/admin/dashboard');
-      } else if (storedPartnerRole === 'partner') {
-        navigate('/dashboard/register-business');
-      } else {
-        navigate('/dashboard/home');
+        return;
       }
+
+      // Check if this user has existing office registrations (partner)
+      try {
+        const regs = await getMyRegistrations();
+        if (regs && regs.length > 0) {
+          localStorage.setItem('partnerRole', 'partner');
+          const approved = regs.find(r => r.approvalStatus === 'APPROVED');
+          if (approved) {
+            navigate('/dashboard/queue');
+          } else {
+            navigate('/dashboard/pending');
+          }
+          return;
+        }
+      } catch {
+        // Registration check failed — fall through to customer
+      }
+
+      navigate('/dashboard/home');
     } catch (err) {
       setError(err.message);
     } finally {
