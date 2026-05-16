@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { registerOffice } from './queueService';
 import './BusinessRegistrationPage.css';
 
+const isPartner = () => localStorage.getItem('partnerRole') === 'partner';
+
 const BUSINESS_CATEGORIES = [
   'Restaurant',
   'Salon & Spa',
@@ -169,7 +171,7 @@ export default function BusinessRegistrationPage() {
 
       const result = await registerOffice(data);
       setSuccess(`Business "${result.name}" registered successfully! Your registration is pending admin approval.`);
-      setTimeout(() => navigate('/dashboard/map'), 3000);
+      setTimeout(() => navigate('/dashboard/my-registrations'), 2500);
     } catch (err) {
       setError(err.message || 'Failed to register business.');
     } finally {
@@ -437,10 +439,12 @@ export default function BusinessRegistrationPage() {
   return (
     <div className="breg-root">
       <div className="breg-header">
-        <button type="button" className="breg-back-btn" onClick={() => navigate('/dashboard/map')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          Back to Map
-        </button>
+        {!isPartner() && (
+          <button type="button" className="breg-back-btn" onClick={() => navigate('/dashboard/map')}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            Back to Map
+          </button>
+        )}
         <div>
           <h1>Register Your Business</h1>
           <p>Join QuickQueue and let customers queue digitally</p>
