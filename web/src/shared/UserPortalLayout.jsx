@@ -249,7 +249,7 @@ export default function UserPortalLayout() {
           <span className="portal-brand-logo">Q</span>
           <div>
             <h2>QuickQueue</h2>
-            <p>Service Portal</p>
+            <p>Customer Portal</p>
           </div>
         </div>
 
@@ -259,12 +259,12 @@ export default function UserPortalLayout() {
             Home
           </NavLink>
           <NavLink to="/dashboard/map" className={({ isActive }) => `portal-nav-link ${isActive ? 'active' : ''}`}>
-            <span className="portal-nav-icon">🗺️</span>
-            Map View
+            <span className="portal-nav-icon">📍</span>
+            Map
           </NavLink>
           <NavLink to="/dashboard/queues" className={({ isActive }) => `portal-nav-link ${isActive ? 'active' : ''}`}>
-            <span className="portal-nav-icon">🎫</span>
-            Active Queues
+            <span className="portal-nav-icon">📋</span>
+            My Queues
           </NavLink>
           <NavLink to="/dashboard/profile" className={({ isActive }) => `portal-nav-link ${isActive ? 'active' : ''}`}>
             <span className="portal-nav-icon">👤</span>
@@ -279,8 +279,8 @@ export default function UserPortalLayout() {
       <main className="portal-main">
         <header className="portal-topbar">
           <div>
-            <h1>Welcome back</h1>
-            <p>{displayName}</p>
+            <h1>Welcome back, {displayName}</h1>
+            <p>Find, join, and manage your queues</p>
           </div>
           <div className="portal-user-chip">👤 {displayName}</div>
         </header>

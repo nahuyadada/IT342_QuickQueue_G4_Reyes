@@ -82,6 +82,18 @@ public class QueueController {
         }
     }
 
+    @PostMapping("/queues/complete/{ticketId}")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> completeTicket(
+            @PathVariable Long ticketId) {
+        try {
+            Map<String, Object> result = queueFacade.completeTicket(ticketId);
+            return ResponseEntity.ok(ApiResponse.success(result));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("BUSINESS-001", e.getMessage()));
+        }
+    }
+
     @GetMapping("/offices")
     public ResponseEntity<ApiResponse<List<ServiceOffice>>> getOffices() {
         List<ServiceOffice> offices = queueFacade.getActiveOffices();

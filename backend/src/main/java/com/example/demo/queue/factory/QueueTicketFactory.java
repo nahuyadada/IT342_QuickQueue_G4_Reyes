@@ -5,6 +5,7 @@ import com.example.demo.queue.repository.QueueTicketRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -29,7 +30,10 @@ public class QueueTicketFactory {
         int currentWaiting = queueTicketRepository.countByOfficeIdAndStatus(
                 officeId, QueueTicket.TicketStatus.WAITING);
 
-        String ticketNumber = generateTicketNumber(officeId, currentWaiting + 1);
+        // Use total tickets created TODAY (all statuses) for unique sequence number
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        int totalToday = queueTicketRepository.countByOfficeIdAndCreatedAtAfter(officeId, startOfDay);
+        String ticketNumber = generateTicketNumber(officeId, totalToday + 1);
 
         return QueueTicket.builder()
                 .ticketNumber(ticketNumber)

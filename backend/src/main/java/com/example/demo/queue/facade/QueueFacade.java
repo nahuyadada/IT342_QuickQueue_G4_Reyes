@@ -91,19 +91,31 @@ public class QueueFacade {
         ServiceOffice office = officeRepository.findById(ticket.getOfficeId())
                 .orElseThrow(() -> new RuntimeException("Office not found"));
 
-        int peopleAhead = 0;
-        if (ticket.getStatus() == QueueTicket.TicketStatus.WAITING) {
+        Map<String, Object> status = buildTicketResponse(ticket, office);
+
+        if (ticket.getStatus() == QueueTicket.TicketStatus.SERVING) {
+            // Currently being served — position 1, nobody ahead
+            status.put("position", 1);
+            status.put("peopleAhead", 0);
+            status.put("estimatedWaitMinutes", 0);
+        } else if (ticket.getStatus() == QueueTicket.TicketStatus.WAITING) {
+            // Dynamically count how many are actually ahead
             List<QueueTicket> waitingQueue = queueService.getWaitingTickets(ticket.getOfficeId());
+            int peopleAhead = 0;
             for (QueueTicket t : waitingQueue) {
                 if (t.getPosition() < ticket.getPosition()) {
                     peopleAhead++;
                 }
             }
+            status.put("position", peopleAhead + 1);
+            status.put("peopleAhead", peopleAhead);
+            status.put("estimatedWaitMinutes", peopleAhead * 5);
+        } else {
+            // COMPLETED or CANCELLED
+            status.put("peopleAhead", 0);
+            status.put("estimatedWaitMinutes", 0);
         }
 
-        Map<String, Object> status = buildTicketResponse(ticket, office);
-        status.put("peopleAhead", peopleAhead);
-        status.put("estimatedWaitMinutes", peopleAhead * 5); // ~5 min per person
         return status;
     }
 
@@ -169,6 +181,50 @@ public class QueueFacade {
 
         Map<String, Object> response = buildTicketResponse(nextTicket, office);
         response.put("waitingCount", queueService.getWaitingCount(officeId));
+        return response;
+    }
+
+    /**
+     * Complete a queue ticket: mark as COMPLETED, publish event, then auto-advance
+     * to serve the next customer in line.
+     * Customer-initiated when their status is SERVING.
+     */
+    public Map<String, Object> completeTicket(Long ticketId) {
+        QueueTicket ticket = queueService.findTicketById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        if (ticket.getStatus() != QueueTicket.TicketStatus.SERVING) {
+            throw new RuntimeException("Only SERVING tickets can be completed");
+        }
+
+        ServiceOffice office = officeRepository.findById(ticket.getOfficeId())
+                .orElseThrow(() -> new RuntimeException("Office not found"));
+
+        // 1. Mark this ticket as COMPLETED
+        ticket = queueService.updateTicketStatus(ticket, QueueTicket.TicketStatus.COMPLETED);
+
+        eventPublisher.publish(new QueueEvent(
+                QueueEvent.EventType.TICKET_COMPLETED,
+                ticket.getId(),
+                ticket.getUserId(),
+                ticket.getOfficeId(),
+                "Ticket " + ticket.getTicketNumber() + " completed at " + office.getName()
+        ));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ticketId", ticket.getId());
+        response.put("ticketNumber", ticket.getTicketNumber());
+        response.put("status", ticket.getStatus().name());
+
+        // 2. Auto-advance: serve the next waiting customer
+        try {
+            Map<String, Object> nextServing = advanceQueue(ticket.getOfficeId());
+            response.put("nextTicket", nextServing);
+        } catch (RuntimeException e) {
+            // No more waiting tickets — that's fine
+            response.put("nextTicket", null);
+        }
+
         return response;
     }
 
