@@ -224,6 +224,8 @@ public class QueueFacade {
                 .leaseAgreement(request.getLeaseAgreement() != null ? request.getLeaseAgreement().trim() : null)
                 .taxDocument(request.getTaxDocument() != null ? request.getTaxDocument().trim() : null)
                 .additionalNotes(request.getAdditionalNotes() != null ? request.getAdditionalNotes().trim() : null)
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
                 .ownerUserId(ownerUserId)
                 .isActive(false)
                 .approvalStatus(ServiceOffice.ApprovalStatus.PENDING)
@@ -422,6 +424,8 @@ public class QueueFacade {
         response.put("taxDocument", office.getTaxDocument());
         response.put("additionalNotes", office.getAdditionalNotes());
         response.put("ownerUserId", office.getOwnerUserId());
+        response.put("latitude", office.getLatitude());
+        response.put("longitude", office.getLongitude());
         response.put("approvalStatus", office.getApprovalStatus().name());
         response.put("isActive", office.isActive());
         response.put("createdAt", office.getCreatedAt().toString());

@@ -640,6 +640,220 @@
   }
 }
 
+/* ── Map ─────────────────────────────────────────── */
+
+.breg-map-wrapper {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid #e2e2ee;
+  background: #f0eef8;
+}
+
+.breg-map-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fafaff;
+  border-bottom: 1px solid #e8e6f2;
+}
+
+.breg-map-search-input {
+  flex: 1;
+  padding: 9px 14px;
+  border: 1.5px solid #e2e2ee;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  color: #1a1a2e;
+  background: #fff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.breg-map-search-input:focus {
+  outline: none;
+  border-color: #7c5cfc;
+  box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.12);
+}
+.breg-map-search-input::placeholder {
+  color: #b3b3c8;
+}
+
+.breg-map-search-btn,
+.breg-locate-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.breg-map-search-btn {
+  background: linear-gradient(135deg, #7c5cfc, #5a3de8);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(124, 92, 252, 0.25);
+}
+.breg-map-search-btn:hover {
+  box-shadow: 0 4px 14px rgba(124, 92, 252, 0.35);
+  transform: translateY(-1px);
+}
+.breg-map-search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.breg-locate-btn {
+  background: #f0eef8;
+  color: #7c5cfc;
+  border: 1.5px solid #e2e2ee;
+}
+.breg-locate-btn:hover {
+  background: #e0d4fc;
+  border-color: #c4bae8;
+}
+.breg-locate-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.breg-map-search-results {
+  position: absolute;
+  top: 56px;
+  left: 12px;
+  right: 12px;
+  z-index: 1000;
+  background: #fff;
+  border: 1px solid #e2e2ee;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.breg-map-search-result-item {
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #1a1a2e;
+  cursor: pointer;
+  border-bottom: 1px solid #f0eef8;
+  transition: background 0.15s;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.breg-map-search-result-item:last-child {
+  border-bottom: none;
+}
+.breg-map-search-result-item:hover {
+  background: #f5f0ff;
+}
+.breg-map-search-result-item .result-icon {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.breg-map-container {
+  height: 320px;
+  width: 100%;
+  z-index: 1;
+}
+
+/* Fix leaflet z-index conflicts */
+.breg-map-container .leaflet-pane {
+  z-index: 1;
+}
+.breg-map-container .leaflet-control {
+  z-index: 2;
+}
+
+.breg-map-coords {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.breg-coords-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: rgba(26, 26, 46, 0.82);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.breg-map-overlay-hint {
+  position: absolute;
+  inset: 0;
+  z-index: 450;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.breg-map-overlay-icon {
+  font-size: 36px;
+  animation: bregBouncePin 1.6s ease-in-out infinite;
+  margin-bottom: 6px;
+}
+
+@keyframes bregBouncePin {
+  0%, 100% { transform: translateY(0); }
+  50%     { transform: translateY(-10px); }
+}
+
+.breg-map-overlay-hint span {
+  background: rgba(26, 26, 46, 0.78);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+
+.breg-geocoding-indicator {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f5f0ff;
+  border: 1px solid #e0d4fc;
+  color: #7c5cfc;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 8px;
+  animation: bregFadeIn 0.25s ease;
+}
+
+.breg-geocoding-indicator .breg-spinner {
+  border-color: rgba(124, 92, 252, 0.2);
+  border-top-color: #7c5cfc;
+  width: 12px;
+  height: 12px;
+}
+
 /* ── Bottom Actions ──────────────────────────────── */
 
 .breg-actions {

@@ -9,6 +9,8 @@ public class OfficeRegistrationRequest {
     private String address;
     private String type;
     private String category;
+    private Double latitude;
+    private Double longitude;
 
     // Contact info
     private String phoneNumber;

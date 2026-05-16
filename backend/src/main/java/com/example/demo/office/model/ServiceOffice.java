@@ -32,6 +32,12 @@ public class ServiceOffice {
     @Column
     private Long ownerUserId;
 
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
+
     // ── New registration fields ──
 
     @Column

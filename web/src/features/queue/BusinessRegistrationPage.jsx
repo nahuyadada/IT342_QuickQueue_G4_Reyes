@@ -1,6 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { registerOffice } from './queueService';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import './BusinessRegistrationPage.css';
 
 const isPartner = () => localStorage.getItem('partnerRole') === 'partner';
@@ -63,6 +65,166 @@ export default function BusinessRegistrationPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Map state
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
+  const [reverseGeocoding, setReverseGeocoding] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searching, setSearching] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markerRef = useRef(null);
+
+  const reverseGeocode = useCallback(async (lat, lng) => {
+    setReverseGeocoding(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const data = await res.json();
+      if (data.display_name) {
+        setAddress(data.display_name);
+      }
+    } catch {
+      // Silent fail — user can type address manually
+    } finally {
+      setReverseGeocoding(false);
+    }
+  }, []);
+
+  // Place or move marker helper
+  const placeMarker = useCallback((lat, lng) => {
+    setLatitude(lat);
+    setLongitude(lng);
+    const map = mapInstanceRef.current;
+    if (!map) return;
+    if (markerRef.current) {
+      markerRef.current.setLatLng([lat, lng]);
+    } else {
+      markerRef.current = L.marker([lat, lng]).addTo(map);
+    }
+    map.setView([lat, lng], Math.max(map.getZoom(), 15));
+  }, []);
+
+  // Forward geocoding search
+  const handleMapSearch = useCallback(async () => {
+    if (!searchQuery.trim()) return;
+    setSearching(true);
+    setSearchResults([]);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery.trim())}&limit=5&addressdetails=1`,
+        { headers: { 'Accept-Language': 'en' } }
+      );
+      const data = await res.json();
+      if (data.length === 1) {
+        const { lat, lon, display_name } = data[0];
+        placeMarker(parseFloat(lat), parseFloat(lon));
+        setAddress(display_name);
+        setSearchResults([]);
+        setSearchQuery('');
+      } else if (data.length > 1) {
+        setSearchResults(data);
+      } else {
+        setError('No locations found. Try a different search term.');
+        setTimeout(() => setError(''), 3000);
+      }
+    } catch {
+      setError('Search failed. Please try again.');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setSearching(false);
+    }
+  }, [searchQuery, placeMarker]);
+
+  const selectSearchResult = useCallback((result) => {
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+    placeMarker(lat, lng);
+    setAddress(result.display_name);
+    setSearchResults([]);
+    setSearchQuery('');
+  }, [placeMarker]);
+
+  // Use My Location
+  const handleLocateMe = useCallback(() => {
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.');
+      setTimeout(() => setError(''), 3000);
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        placeMarker(lat, lng);
+        reverseGeocode(lat, lng);
+        setLocating(false);
+      },
+      () => {
+        setError('Could not get your location. Please allow location access.');
+        setTimeout(() => setError(''), 3000);
+        setLocating(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }, [placeMarker, reverseGeocode]);
+
+  // Initialize Leaflet map when step 0 is active
+  useEffect(() => {
+    if (currentStep !== 0 || !mapContainerRef.current || mapInstanceRef.current) return;
+
+    // Fix default icon paths for Leaflet in bundled environments
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    });
+
+    const map = L.map(mapContainerRef.current).setView([10.3157, 123.8854], 13); // Cebu City default
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+
+    // If we already have a position, place marker
+    if (latitude && longitude) {
+      const marker = L.marker([latitude, longitude]).addTo(map);
+      markerRef.current = marker;
+      map.setView([latitude, longitude], 16);
+    }
+
+    map.on('click', (e) => {
+      const { lat, lng } = e.latlng;
+      placeMarker(lat, lng);
+      reverseGeocode(lat, lng);
+    });
+
+    mapInstanceRef.current = map;
+
+    // Try to geolocate user
+    if (navigator.geolocation && !latitude) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude: lat, longitude: lng } = pos.coords;
+          map.setView([lat, lng], 15);
+        },
+        () => { /* ignore geolocation errors */ },
+        { timeout: 5000 }
+      );
+    }
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+      markerRef.current = null;
+    };
+  }, [currentStep]);
+
   const handlePhotoAdd = (e) => {
     const files = Array.from(e.target.files);
     if (photoFiles.length + files.length > 5) {
@@ -111,6 +273,7 @@ export default function BusinessRegistrationPage() {
         if (!name.trim()) return setError('Business name is required.');
         if (!category) return setError('Please select a business category.');
         if (!type.trim()) return setError('Service type is required.');
+        if (!latitude || !longitude) return setError('Please pin your business location on the map.');
         if (!address.trim()) return setError('Business address is required.');
         break;
       case 1:
@@ -167,6 +330,8 @@ export default function BusinessRegistrationPage() {
         leaseAgreement: getFileName(leaseAgreement),
         taxDocument: getFileName(taxDocument),
         additionalNotes: additionalNotes.trim() || null,
+        latitude: latitude || null,
+        longitude: longitude || null,
       };
 
       const result = await registerOffice(data);
@@ -229,8 +394,67 @@ export default function BusinessRegistrationPage() {
       </div>
 
       <div className="breg-field">
+        <label>📍 Pin Your Location <span className="breg-req">*</span></label>
+        <small className="breg-hint" style={{ marginBottom: 10, display: 'block' }}>
+          Search for a place, use your current location, or click the map to pin your business.
+        </small>
+        <div className="breg-map-wrapper">
+          <div className="breg-map-toolbar">
+            <input
+              type="text"
+              className="breg-map-search-input"
+              placeholder="Search address or place name..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleMapSearch()}
+            />
+            <button type="button" className="breg-map-search-btn" onClick={handleMapSearch} disabled={searching || !searchQuery.trim()}>
+              {searching ? <><span className="breg-spinner" /> Searching</> : '🔍 Search'}
+            </button>
+            <button type="button" className="breg-locate-btn" onClick={handleLocateMe} disabled={locating}>
+              {locating ? <><span className="breg-spinner" /> Locating</> : '📍 My Location'}
+            </button>
+          </div>
+
+          {searchResults.length > 0 && (
+            <div className="breg-map-search-results">
+              {searchResults.map((r, i) => (
+                <div key={i} className="breg-map-search-result-item" onClick={() => selectSearchResult(r)}>
+                  <span className="result-icon">📍</span>
+                  <span>{r.display_name}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div ref={mapContainerRef} className="breg-map-container" />
+          {latitude && longitude && (
+            <div className="breg-map-coords">
+              <span className="breg-coords-badge">
+                📌 {latitude.toFixed(5)}, {longitude.toFixed(5)}
+              </span>
+            </div>
+          )}
+          {!latitude && (
+            <div className="breg-map-overlay-hint">
+              <div className="breg-map-overlay-icon">📍</div>
+              <span>Click anywhere on the map to pin your business location</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="breg-field">
         <label htmlFor="breg-address">Business Address / Service Area <span className="breg-req">*</span></label>
-        <textarea id="breg-address" className="breg-input breg-textarea" placeholder="Full address including city and postal code" rows="3" value={address} onChange={(e) => setAddress(e.target.value)} />
+        <div style={{ position: 'relative' }}>
+          <textarea id="breg-address" className="breg-input breg-textarea" placeholder="Full address including city and postal code" rows="3" value={address} onChange={(e) => setAddress(e.target.value)} />
+          {reverseGeocoding && (
+            <div className="breg-geocoding-indicator">
+              <span className="breg-spinner" /> Detecting address...
+            </div>
+          )}
+        </div>
+        <small className="breg-hint">Auto-filled from map pin · You can also edit manually</small>
       </div>
     </div>
   );
@@ -389,6 +613,9 @@ export default function BusinessRegistrationPage() {
             <div className="breg-review-item"><span>Category</span><strong>{category}</strong></div>
             <div className="breg-review-item"><span>Type</span><strong>{type}</strong></div>
             <div className="breg-review-item"><span>Address</span><strong>{address}</strong></div>
+            {latitude && longitude && (
+              <div className="breg-review-item"><span>Coordinates</span><strong>📌 {latitude.toFixed(5)}, {longitude.toFixed(5)}</strong></div>
+            )}
           </div>
 
           <div className="breg-review-card">
