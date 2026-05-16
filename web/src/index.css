@@ -3,13 +3,13 @@
 }
 
 :root {
-  font-family: 'Segoe UI', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Inter', 'Segoe UI', system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
   color-scheme: light;
-  color: #111827;
-  background-color: #f0f4ff;
+  color: #0f172a;
+  background-color: #f8fafc;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -30,4 +30,9 @@ h1, h2, h3, h4, h5, h6 {
 
 p {
   margin: 0;
+}
+
+/* Smooth scroll for anchor links */
+html {
+  scroll-behavior: smooth;
 }
