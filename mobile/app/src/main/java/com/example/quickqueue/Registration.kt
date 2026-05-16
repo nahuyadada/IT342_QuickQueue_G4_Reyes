@@ -23,7 +23,6 @@ class Registration : AppCompatActivity() {
     private lateinit var textError: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var buttonRegister: MaterialButton
-    private lateinit var buttonGoogleSignIn: MaterialButton
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,11 +35,8 @@ class Registration : AppCompatActivity() {
         textError = findViewById(R.id.textError)
         progressBar = findViewById(R.id.progressBar)
         buttonRegister = findViewById(R.id.buttonRegister)
-        buttonGoogleSignIn = findViewById(R.id.buttonGoogleSignIn)
 
         buttonRegister.setOnClickListener { submitRegistration() }
-        // Placeholder only for now: intentionally no action on click.
-        buttonGoogleSignIn.setOnClickListener { }
 
         findViewById<TextView>(R.id.textGoToLogin).setOnClickListener {
             finish()
@@ -116,6 +112,5 @@ class Registration : AppCompatActivity() {
     private fun setLoadingState(isLoading: Boolean) {
         progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         buttonRegister.isEnabled = !isLoading
-        buttonGoogleSignIn.isEnabled = !isLoading
     }
 }

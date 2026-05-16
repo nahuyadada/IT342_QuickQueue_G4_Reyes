@@ -16,4 +16,35 @@
     <color name="login_link_blue">#2F5EEB</color>
     <color name="login_divider">#D5DBE5</color>
     <color name="login_checkbox_tint">#6B7280</color>
+
+    <!-- Dashboard colors (matching web) -->
+    <color name="dash_bg">#F0F4FF</color>
+    <color name="dash_navbar_start">#1E3A8A</color>
+    <color name="dash_navbar_end">#2563EB</color>
+    <color name="dash_primary">#2563EB</color>
+    <color name="dash_primary_dark">#1D4ED8</color>
+    <color name="dash_card_bg">#FFFFFF</color>
+    <color name="dash_text_primary">#111827</color>
+    <color name="dash_text_secondary">#6B7280</color>
+    <color name="dash_text_muted">#64748B</color>
+    <color name="dash_border">#D1D5DB</color>
+    <color name="dash_border_light">#E2E8F0</color>
+    <color name="dash_input_bg">#F8FAFC</color>
+    <color name="dash_btn_default_bg">#E5E7EB</color>
+    <color name="dash_btn_default_border">#D1D5DB</color>
+    <color name="dash_danger">#EF4444</color>
+    <color name="dash_danger_dark">#DC2626</color>
+    <color name="dash_alert_error_bg">#FEF2F2</color>
+    <color name="dash_alert_error_text">#991B1B</color>
+    <color name="dash_alert_error_border">#FECACA</color>
+    <color name="dash_alert_success_bg">#F0FDF4</color>
+    <color name="dash_alert_success_text">#166534</color>
+    <color name="dash_alert_success_border">#BBF7D0</color>
+    <color name="dash_accent_border">#2563EB</color>
+    <color name="dash_navbar_btn_bg">#26FFFFFF</color>
+    <color name="dash_navbar_btn_border">#4DFFFFFF</color>
+    <color name="dash_card_shadow">#141E3A8A</color>
+    <color name="dash_empty_border">#CBD5E1</color>
+    <color name="dash_ticket_item_bg">#F8FAFC</color>
+    <color name="dash_ticket_item_border">#E2E8F0</color>
 </resources>
