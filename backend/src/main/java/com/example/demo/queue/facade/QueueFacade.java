@@ -229,6 +229,19 @@ public class QueueFacade {
     }
 
     /**
+     * Get the current waiting-queue count for every active office.
+     * Returns a map of officeId → waitingCount.
+     */
+    public Map<Long, Integer> getQueueCounts() {
+        List<ServiceOffice> activeOffices = officeRepository.findByIsActiveTrueAndApprovalStatus(ServiceOffice.ApprovalStatus.APPROVED);
+        Map<Long, Integer> counts = new HashMap<>();
+        for (ServiceOffice office : activeOffices) {
+            counts.put(office.getId(), queueService.getWaitingCount(office.getId()));
+        }
+        return counts;
+    }
+
+    /**
      * List all active service offices.
      */
     public List<ServiceOffice> getActiveOffices() {

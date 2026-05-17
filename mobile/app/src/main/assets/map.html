@@ -8,36 +8,179 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body,#map{width:100%;height:100%}
-.marker-label{font-family:-apple-system,sans-serif;font-size:12px;padding:8px 12px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,.15);max-width:200px}
-.marker-label b{display:block;margin-bottom:2px}
-.marker-label .info{color:#6b7280;font-size:11px;line-height:1.4}
+
+/* Legend overlay */
+.map-legend{
+  position:absolute;
+  bottom:16px;
+  right:10px;
+  z-index:1000;
+  background:rgba(255,255,255,0.95);
+  backdrop-filter:blur(6px);
+  border-radius:12px;
+  padding:10px 14px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.18);
+  font-family:-apple-system,sans-serif;
+  min-width:150px;
+}
+.map-legend h4{
+  font-size:11px;
+  font-weight:700;
+  color:#374151;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  margin-bottom:8px;
+}
+.legend-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin:4px 0;
+}
+.legend-dot{
+  width:13px;height:13px;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,0.8);
+  box-shadow:0 1px 4px rgba(0,0,0,.25);
+  flex-shrink:0;
+}
+.legend-label{font-size:11px;color:#4B5563;line-height:1.3}
+.legend-sub{font-size:10px;color:#9CA3AF}
+
+/* Popup */
+.qq-popup{font-family:-apple-system,sans-serif;min-width:190px}
+.qq-popup .title{font-weight:700;font-size:13.5px;color:#111827;margin-bottom:3px}
+.qq-popup .type{font-size:11px;color:#6B7280;margin-bottom:8px}
+.qq-popup .stats{display:flex;gap:10px;flex-wrap:wrap}
+.qq-popup .stat-box{
+  background:#F9FAFB;border-radius:8px;
+  padding:6px 10px;text-align:center;flex:1;
+}
+.qq-popup .stat-num{font-size:17px;font-weight:700;line-height:1}
+.qq-popup .stat-lbl{font-size:10px;color:#6B7280;margin-top:1px}
+.qq-popup .badge{
+  display:inline-block;margin-top:8px;
+  padding:3px 8px;border-radius:20px;
+  font-size:10.5px;font-weight:600;letter-spacing:.3px;
+}
+.badge-red   {background:#FEE2E2;color:#DC2626}
+.badge-yellow{background:#FEF9C3;color:#B45309}
+.badge-green {background:#D1FAE5;color:#059669}
+
+/* Pulse animation for busy markers */
+@keyframes pulse{
+  0%  {transform:scale(1);opacity:1}
+  50% {transform:scale(1.35);opacity:.5}
+  100%{transform:scale(1);opacity:1}
+}
+.pulse-ring{
+  position:absolute;inset:-6px;border-radius:50%;
+  animation:pulse 1.6s ease-in-out infinite;
+}
 </style>
 </head>
 <body>
 <div id="map"></div>
+
+<div class="map-legend">
+  <h4>Queue Density</h4>
+  <div class="legend-row">
+    <span class="legend-dot" style="background:#22C55E"></span>
+    <span class="legend-label">Low<br><span class="legend-sub">1–5 waiting</span></span>
+  </div>
+  <div class="legend-row">
+    <span class="legend-dot" style="background:#F59E0B"></span>
+    <span class="legend-label">Moderate<br><span class="legend-sub">6–14 waiting</span></span>
+  </div>
+  <div class="legend-row">
+    <span class="legend-dot" style="background:#EF4444"></span>
+    <span class="legend-label">Busy<br><span class="legend-sub">15+ waiting</span></span>
+  </div>
+</div>
+
 <script>
-var map=L.map('map',{zoomControl:false}).setView([14.5995,120.9842],13);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  attribution:'© OpenStreetMap',maxZoom:18
+var map = L.map('map', {zoomControl: true}).setView([10.3157, 123.8854], 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap', maxZoom: 18
 }).addTo(map);
 
-var places=[
-  {name:"BDO Makati Branch",type:"Bank",lat:14.5547,lng:121.0244,wait:5,count:3,color:"#22C55E",svc:"15 min"},
-  {name:"Manila Doctors Hospital",type:"Hospital",lat:14.5812,lng:120.9848,wait:15,count:8,color:"#F59E0B",svc:"30 min"},
-  {name:"SSS Main Office",type:"Gov't Office",lat:14.5676,lng:121.0339,wait:45,count:23,color:"#EF4444",svc:"20 min"},
-  {name:"BPI Ortigas Branch",type:"Bank",lat:14.5873,lng:121.0615,wait:3,count:2,color:"#22C55E",svc:"10 min"},
-  {name:"Philippine General Hospital",type:"Hospital",lat:14.5777,lng:120.9867,wait:60,count:30,color:"#EF4444",svc:"45 min"},
-  {name:"DFA Manila",type:"Gov't Office",lat:14.5636,lng:120.9936,wait:25,count:12,color:"#F59E0B",svc:"25 min"}
+// ── Real Cebu branches with simulated queue data ───────────────────────────
+var places = [
+  // ── Banks ──
+  { name:"HSBC Philippines",                            type:"Bank",             lat:10.3158, lng:123.8854, count:3,  wait:15  },
+  { name:"UnionBank – Cebu IT Park",                    type:"Bank",             lat:10.3310, lng:123.9065, count:18, wait:90  },
+  { name:"BPI Cebu Main Branch",                        type:"Bank",             lat:10.2963, lng:123.9020, count:22, wait:110 },
+  { name:"Philippine Savings Bank – Cebu Uptown",       type:"Bank",             lat:10.3175, lng:123.9050, count:9,  wait:45  },
+  { name:"UnionBank Insular Building",                  type:"Bank",             lat:10.3178, lng:123.9055, count:5,  wait:25  },
+
+  // ── Dental Clinics ──
+  { name:"Affinity Dental Clinics Cebu",                type:"Dental Clinic",    lat:10.3312, lng:123.9068, count:7,  wait:35  },
+  { name:"D&G Dental Clinic",                           type:"Dental Clinic",    lat:10.3085, lng:123.8948, count:2,  wait:10  },
+  { name:"Cebu Dental Care Center",                     type:"Dental Clinic",    lat:10.3140, lng:123.8935, count:11, wait:55  },
+  { name:"Metro Dental SM City Cebu",                   type:"Dental Clinic",    lat:10.3115, lng:123.9189, count:20, wait:100 },
+  { name:"Green Apple Dental Clinic",                   type:"Dental Clinic",    lat:10.3173, lng:123.9058, count:4,  wait:20  },
+
+  // ── Hospitals ──
+  { name:"Cebu Doctors' University Hospital",           type:"Hospital",         lat:10.3113, lng:123.8952, count:25, wait:125 },
+  { name:"St. Vincent General Hospital",                type:"Hospital",         lat:10.3098, lng:123.8925, count:8,  wait:40  },
+  { name:"Adventist Hospital Cebu",                     type:"Hospital",         lat:10.3180, lng:123.8850, count:6,  wait:30  },
+  { name:"VisayasMed Hospital",                         type:"Hospital",         lat:10.3095, lng:123.8970, count:17, wait:85  },
+
+  // ── Government Offices ──
+  { name:"Cebu City Hall",                              type:"Gov't Office",     lat:10.2933, lng:123.9019, count:24, wait:120 },
+  { name:"Office of the Building Official",             type:"Gov't Office",     lat:10.2935, lng:123.9022, count:19, wait:95  },
+  { name:"Human Resource Development Office",           type:"Gov't Office",     lat:10.2937, lng:123.9025, count:13, wait:65  },
+  { name:"Public Services Office",                      type:"Gov't Office",     lat:10.3080, lng:123.8965, count:10, wait:50  }
 ];
 
-places.forEach(function(p){
-  var icon=L.divIcon({
-    className:'',
-    html:'<div style="width:18px;height:18px;border-radius:50%;background:'+p.color+';border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>',
-    iconSize:[18,18],iconAnchor:[9,9]
+function getDensity(count) {
+  if (count >= 15) return { color:'#EF4444', label:'Busy',     badgeClass:'badge-red',    pulse:true  };
+  if (count >= 6)  return { color:'#F59E0B', label:'Moderate', badgeClass:'badge-yellow', pulse:false };
+  return              { color:'#22C55E', label:'Low',      badgeClass:'badge-green',  pulse:false };
+}
+
+places.forEach(function(p) {
+  var d = getDensity(p.count);
+
+  // Build marker HTML
+  var pulse = d.pulse
+    ? '<div class="pulse-ring" style="background:' + d.color + '33"></div>'
+    : '';
+  var iconHtml =
+    '<div style="position:relative;width:20px;height:20px">' +
+      pulse +
+      '<div style="position:absolute;inset:0;width:20px;height:20px;border-radius:50%;' +
+           'background:' + d.color + ';border:3px solid white;' +
+           'box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>' +
+    '</div>';
+
+  var icon = L.divIcon({
+    className: '',
+    html: iconHtml,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10]
   });
-  L.marker([p.lat,p.lng],{icon:icon}).addTo(map)
-    .bindPopup('<div class="marker-label"><b>'+p.name+'</b><div class="info">'+p.type+'<br>Waiting: '+p.count+' people<br>Est. wait: ~'+p.wait+' min<br>Service: ~'+p.svc+'</div></div>',{closeButton:false});
+
+  // Build popup HTML
+  var popup =
+    '<div class="qq-popup">' +
+      '<div class="title">' + p.name + '</div>' +
+      '<div class="type">' + p.type + '</div>' +
+      '<div class="stats">' +
+        '<div class="stat-box">' +
+          '<div class="stat-num" style="color:' + d.color + '">' + p.count + '</div>' +
+          '<div class="stat-lbl">Waiting</div>' +
+        '</div>' +
+        '<div class="stat-box">' +
+          '<div class="stat-num" style="color:#6B7280">~' + p.wait + '</div>' +
+          '<div class="stat-lbl">Est. wait (min)</div>' +
+        '</div>' +
+      '</div>' +
+      '<span class="badge ' + d.badgeClass + '">' + d.label + ' Queue</span>' +
+    '</div>';
+
+  L.marker([p.lat, p.lng], { icon: icon })
+    .addTo(map)
+    .bindPopup(popup, { closeButton: false, maxWidth: 230 });
 });
 </script>
 </body>
