@@ -34,6 +34,10 @@ export const getOffices = async () => {
   return apiClient.get('/offices');
 };
 
+export const getQueueCounts = async () => {
+  return apiClient.get('/offices/queue-counts');
+};
+
 export const registerOffice = async (data) => {
   return apiClient.post('/offices/register', data);
 };

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile } from '../auth/authService';
-import { getOffices, joinQueue } from './queueService';
+import { getOffices, getQueueCounts, joinQueue } from './queueService';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './MapViewPage.css';
@@ -9,17 +9,30 @@ import './CustomerPortal.css';
 
 /* ── Category helpers ── */
 const CATEGORY_EMOJI = {
-  'Restaurant': '🍽️', 'Salon & Spa': '💇', 'Repair Shop': '🔧',
-  'Medical Clinic': '🏥', 'Dental Clinic': '🦷', 'Bank & Finance': '🏦',
-  'Government Office': '🏛️', 'Pharmacy': '💊', 'Grocery & Retail': '🏪',
-  'Education': '📚', 'Legal Services': '⚖️', 'Real Estate': '🏠',
-  'Automotive': '🚗', 'Fitness & Gym': '💪', 'Other': '📋',
+  'Government Office': '🏛️', 'Bank & Finance': '🏦', 'Medical Clinic': '🏥',
+  'Dental Clinic': '🦷', 'Hospital': '🏥', 'Pharmacy': '💊',
+  'Utility Office': '💡', 'Telecommunications': '📱',
+  'Admissions Office': '🏫', 'Transport Terminal': '🚌', 'Other': '📋',
 };
 const getCategoryEmoji = (category) => CATEGORY_EMOJI[category] || '📍';
 
 
 
 const ADVANCE_BOOKING_CATEGORIES = ['Government Office', 'Medical Clinic', 'Dental Clinic'];
+
+const QUEUE_TIERS = {
+  low: { label: 'Small (0-5)', min: 0, max: 5, color: '#16a34a', glow: 'rgba(22,163,74,0.35)' },
+  medium: { label: 'Medium (6-15)', min: 6, max: 15, color: '#f59e0b', glow: 'rgba(245,158,11,0.35)' },
+  high: { label: 'Large (16+)', min: 16, max: Infinity, color: '#ef4444', glow: 'rgba(239,68,68,0.35)' },
+};
+
+const resolveOfficeId = (office) => office.id ?? office.officeId;
+
+const getQueueTier = (count) => {
+  if (count >= QUEUE_TIERS.high.min) return 'high';
+  if (count >= QUEUE_TIERS.medium.min) return 'medium';
+  return 'low';
+};
 
 /* ── SVG icons ── */
 function MapPinIcon() {
@@ -46,6 +59,8 @@ export default function MapViewPage() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [queueCounts, setQueueCounts] = useState({});
+  const [queueCountsError, setQueueCountsError] = useState('');
   const [selectedOfficeId, setSelectedOfficeId] = useState(null);
   const [joiningOfficeId, setJoiningOfficeId] = useState(null);
   const [officeToConfirm, setOfficeToConfirm] = useState(null);
@@ -59,8 +74,23 @@ export default function MapViewPage() {
   const loadOffices = async () => {
     setLoading(true); setError('');
     try {
-      const list = await getOffices();
-      setOffices(list || []);
+      setQueueCountsError('');
+      const [officesResult, countsResult] = await Promise.allSettled([
+        getOffices(),
+        getQueueCounts(),
+      ]);
+
+      if (officesResult.status === 'fulfilled') {
+        setOffices(officesResult.value || []);
+      } else {
+        throw officesResult.reason;
+      }
+
+      if (countsResult.status === 'fulfilled') {
+        setQueueCounts(countsResult.value || {});
+      } else {
+        setQueueCountsError('Queue counts are temporarily unavailable.');
+      }
     } catch (err) {
       setError(err.message || 'Unable to load offices.');
     } finally {
@@ -86,6 +116,13 @@ export default function MapViewPage() {
     const cats = new Set(offices.map(o => o.category).filter(Boolean));
     return ['All', ...Array.from(cats).sort()];
   }, [offices]);
+
+  const getQueueCount = useCallback((office) => {
+    const officeId = resolveOfficeId(office);
+    if (officeId == null) return 0;
+    const count = queueCounts[officeId];
+    return Number.isFinite(count) ? count : Number(count || 0);
+  }, [queueCounts]);
 
   // ── Initialize Leaflet map ──
   useEffect(() => {
@@ -132,17 +169,20 @@ export default function MapViewPage() {
       bounds.push([lat, lng]);
 
       const emoji = getCategoryEmoji(office.category);
+      const queueCount = getQueueCount(office);
+      const queueTier = getQueueTier(queueCount);
+      const tierStyle = QUEUE_TIERS[queueTier];
 
       // Branded blue marker
       const customIcon = L.divIcon({
         html: `<div style="
-          background: linear-gradient(135deg, #2563eb, #1d4ed8);
+          background: linear-gradient(135deg, ${tierStyle.color}, ${tierStyle.color});
           color: white;
           width: 32px; height: 32px;
           border-radius: 50% 50% 50% 4px;
           display: flex; align-items: center; justify-content: center;
           font-size: 15px;
-          box-shadow: 0 3px 10px rgba(37,99,235,0.35);
+          box-shadow: 0 3px 10px ${tierStyle.glow};
           border: 2px solid white;
           transform: rotate(-45deg);
         "><span style="transform: rotate(45deg); display: block;">${emoji}</span></div>`,
@@ -157,7 +197,8 @@ export default function MapViewPage() {
       // Tooltip on hover — real data only
       marker.bindTooltip(
         `<strong>${office.name}</strong><br/>
-         <span style="color:#64748b;">${office.category || office.type}</span>`,
+         <span style="color:#64748b;">${office.category || office.type}</span><br/>
+         <span style="color:#1f2937; font-weight:600;">${queueCount} in queue</span>`,
         { direction: 'top', offset: [0, -36], className: 'mapview-tooltip' }
       );
 
@@ -168,6 +209,7 @@ export default function MapViewPage() {
         <div class="mapview-popup-name">${office.name}</div>
         <div class="mapview-popup-category">${emoji} ${office.category || office.type}</div>
         <div class="mapview-popup-address">${office.address || 'No address provided'}</div>
+        <div class="mapview-popup-queue">${queueCount} currently in queue</div>
       `;
       const btn = document.createElement('button');
       btn.className = 'mapview-popup-btn';
@@ -176,18 +218,18 @@ export default function MapViewPage() {
       popupContent.appendChild(btn);
 
       marker.bindPopup(popupContent, { maxWidth: 280, closeButton: true });
-      marker.on('click', () => setSelectedOfficeId(office.id));
+      marker.on('click', () => setSelectedOfficeId(resolveOfficeId(office)));
       marker.addTo(markersLayerRef.current);
     });
 
     if (bounds.length > 1) mapInstanceRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
     else if (bounds.length === 1) mapInstanceRef.current.setView(bounds[0], 15);
-  }, [filtered]);
+  }, [filtered, getQueueCount]);
 
   const flyToOffice = useCallback((office) => {
     if (!mapInstanceRef.current || !office.latitude || !office.longitude) return;
     mapInstanceRef.current.flyTo([office.latitude, office.longitude], 16, { duration: 0.8 });
-    setSelectedOfficeId(office.id);
+    setSelectedOfficeId(resolveOfficeId(office));
     if (markersLayerRef.current) {
       markersLayerRef.current.eachLayer((layer) => {
         if (layer.getLatLng) {
@@ -208,17 +250,20 @@ export default function MapViewPage() {
     return merged;
   };
 
-  const requestJoinFromOffice = (office) => { setSelectedOfficeId(office.id); setOfficeToConfirm(office); };
+  const requestJoinFromOffice = (office) => { setSelectedOfficeId(resolveOfficeId(office)); setOfficeToConfirm(office); };
   const closeJoinConfirm = () => { if (!joiningOfficeId) setOfficeToConfirm(null); };
 
   const confirmJoinFromOffice = async () => {
     if (!officeToConfirm) return;
     const office = officeToConfirm;
-    setQueueMessage(''); setQueueError(''); setJoiningOfficeId(office.id);
+    setQueueMessage(''); setQueueError('');
     try {
       const user = await resolveUserProfile();
       if (!user.id) throw new Error('Please log in again.');
-      const ticket = await joinQueue(user.id, office.id);
+      const officeId = resolveOfficeId(office);
+      if (!officeId) throw new Error('Office ID is missing.');
+      setJoiningOfficeId(officeId);
+      const ticket = await joinQueue(user.id, officeId);
       localStorage.setItem('activeTicketId', String(ticket.ticketId));
       setQueueMessage(`🎉 Joined ${office.name}! Ticket #${ticket.ticketNumber}`);
       setOfficeToConfirm(null);
@@ -263,6 +308,16 @@ export default function MapViewPage() {
 
         <div ref={mapContainerRef} className="mapview-map-container" id="mapview-map" />
 
+        <div className="mapview-legend" aria-label="Queue size legend">
+          <div className="mapview-legend-title">Queue size</div>
+          {(['low', 'medium', 'high']).map((tierKey) => (
+            <div key={tierKey} className="mapview-legend-item">
+              <span className={`mapview-legend-swatch ${tierKey}`} />
+              <span>{QUEUE_TIERS[tierKey].label}</span>
+            </div>
+          ))}
+        </div>
+
 
 
         {loading && (
@@ -272,11 +327,12 @@ export default function MapViewPage() {
           </div>
         )}
 
-        {(queueMessage || queueError || error) && (
+        {(queueMessage || queueError || error || queueCountsError) && (
           <div className="mapview-alerts">
             {queueMessage && <div className="mapview-alert mapview-alert-success">✅ {queueMessage}</div>}
             {queueError && <div className="mapview-alert mapview-alert-error">⚠️ {queueError}</div>}
             {error && <div className="mapview-alert mapview-alert-error">⚠️ {error}</div>}
+            {queueCountsError && <div className="mapview-alert mapview-alert-warning">⚠️ {queueCountsError}</div>}
           </div>
         )}
       </div>
@@ -312,11 +368,14 @@ export default function MapViewPage() {
             )}
 
             {filtered.map(office => {
+              const officeId = resolveOfficeId(office);
+              const queueCount = getQueueCount(office);
+              const queueTier = getQueueTier(queueCount);
               const hasAdvanceBooking = ADVANCE_BOOKING_CATEGORIES.includes(office.category);
               return (
-                <div key={office.id}
-                  className={`mapview-office-card ${selectedOfficeId === office.id ? 'active' : ''}`}
-                  onClick={() => flyToOffice(office)} id={`office-card-${office.id}`}>
+                <div key={officeId}
+                  className={`mapview-office-card ${selectedOfficeId === officeId ? 'active' : ''}`}
+                  onClick={() => flyToOffice(office)} id={`office-card-${officeId}`}>
                   <div className="mapview-office-top">
                     <span className="mapview-office-name">
                       {getCategoryEmoji(office.category)} {office.name}
@@ -328,14 +387,17 @@ export default function MapViewPage() {
                     <span className="cust-estab-meta-item muted">
                       {getCategoryEmoji(office.category)} {office.category || office.type}
                     </span>
+                    <span className={`mapview-queue-badge ${queueTier}`}>
+                      {queueCount} in queue
+                    </span>
                     {hasAdvanceBooking && (
                       <span className="cust-advance-badge">📅 Advance Booking</span>
                     )}
                   </div>
                   <button className="mapview-office-join-btn"
                     onClick={(e) => { e.stopPropagation(); requestJoinFromOffice(office); }}
-                    disabled={joiningOfficeId === office.id}>
-                    🎫 {joiningOfficeId === office.id ? 'Joining...' : 'Join Queue'}
+                    disabled={joiningOfficeId === officeId}>
+                    🎫 {joiningOfficeId === officeId ? 'Joining...' : 'Join Queue'}
                   </button>
                 </div>
               );
@@ -369,7 +431,7 @@ export default function MapViewPage() {
             <div className="mapview-modal-actions">
               <button className="mapview-modal-btn mapview-modal-btn-cancel" onClick={closeJoinConfirm} disabled={!!joiningOfficeId}>Cancel</button>
               <button className="mapview-modal-btn mapview-modal-btn-confirm" onClick={confirmJoinFromOffice} disabled={!!joiningOfficeId}>
-                {joiningOfficeId === officeToConfirm.id ? (<><span className="mapview-spinner" /> Joining...</>) : (<>🎫 Confirm Join</>)}
+                {joiningOfficeId === resolveOfficeId(officeToConfirm) ? (<><span className="mapview-spinner" /> Joining...</>) : (<>🎫 Confirm Join</>)}
               </button>
             </div>
           </div>

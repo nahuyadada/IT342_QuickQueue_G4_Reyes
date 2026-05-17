@@ -100,6 +100,12 @@ public class QueueController {
         return ResponseEntity.ok(ApiResponse.success(offices));
     }
 
+    @GetMapping("/offices/queue-counts")
+    public ResponseEntity<ApiResponse<Map<Long, Integer>>> getQueueCounts() {
+        Map<Long, Integer> counts = queueFacade.getQueueCounts();
+        return ResponseEntity.ok(ApiResponse.success(counts));
+    }
+
     @PostMapping("/offices/register")
     public ResponseEntity<ApiResponse<Map<String, Object>>> registerOffice(
             @RequestHeader("Authorization") String authHeader,
