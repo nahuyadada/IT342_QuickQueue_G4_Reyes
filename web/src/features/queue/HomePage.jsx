@@ -6,11 +6,10 @@ import './CustomerPortal.css';
 
 /* ── Category helpers ── */
 const CATEGORY_EMOJI = {
-  'Bank & Finance': '🏦', 'Medical Clinic': '🏥', 'Government Office': '🏛️',
-  'Restaurant': '🍽️', 'Salon & Spa': '💇', 'Dental Clinic': '🦷',
-  'Pharmacy': '💊', 'Grocery & Retail': '🏪', 'Education': '📚',
-  'Repair Shop': '🔧', 'Legal Services': '⚖️', 'Real Estate': '🏠',
-  'Automotive': '🚗', 'Fitness & Gym': '💪', 'Other': '📋',
+  'Government Office': '🏛️', 'Bank & Finance': '🏦', 'Medical Clinic': '🏥',
+  'Dental Clinic': '🦷', 'Hospital': '🏥', 'Pharmacy': '💊',
+  'Utility Office': '💡', 'Telecommunications': '📱',
+  'Admissions Office': '🏫', 'Transport Terminal': '🚌', 'Other': '📋',
 };
 const getCategoryEmoji = (cat) => CATEGORY_EMOJI[cat] || '🏢';
 

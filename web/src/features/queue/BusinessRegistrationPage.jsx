@@ -8,20 +8,16 @@ import './BusinessRegistrationPage.css';
 const isPartner = () => localStorage.getItem('partnerRole') === 'partner';
 
 const BUSINESS_CATEGORIES = [
-  'Restaurant',
-  'Salon & Spa',
-  'Repair Shop',
+  'Government Office',
+  'Bank & Finance',
   'Medical Clinic',
   'Dental Clinic',
-  'Bank & Finance',
-  'Government Office',
+  'Hospital',
   'Pharmacy',
-  'Grocery & Retail',
-  'Education',
-  'Legal Services',
-  'Real Estate',
-  'Automotive',
-  'Fitness & Gym',
+  'Utility Office',
+  'Telecommunications',
+  'Admissions Office',
+  'Transport Terminal',
   'Other',
 ];
 
