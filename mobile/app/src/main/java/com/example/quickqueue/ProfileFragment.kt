@@ -3,9 +3,7 @@ package com.example.quickqueue
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -17,7 +15,6 @@ class ProfileFragment : Fragment() {
     private lateinit var nameView: TextView
     private lateinit var emailView: TextView
     private lateinit var avatarView: TextView
-    private lateinit var phoneRow: LinearLayout
     private lateinit var phoneView: TextView
     private lateinit var statQueuesJoined: TextView
     private lateinit var statTimeSaved: TextView
@@ -28,7 +25,6 @@ class ProfileFragment : Fragment() {
         nameView = view.findViewById(R.id.profileName)
         emailView = view.findViewById(R.id.profileEmail)
         avatarView = view.findViewById(R.id.profileAvatar)
-        phoneRow = view.findViewById(R.id.phoneRow)
         phoneView = view.findViewById(R.id.profilePhone)
         statQueuesJoined = view.findViewById(R.id.statQueuesJoined)
         statTimeSaved = view.findViewById(R.id.statTimeSaved)
@@ -106,14 +102,8 @@ class ProfileFragment : Fragment() {
 
     private fun bindProfile(name: String, email: String, phone: String?) {
         nameView.text = name
-        emailView.text = email
-
-        if (!phone.isNullOrBlank()) {
-            phoneView.text = phone
-            phoneRow.visibility = View.VISIBLE
-        } else {
-            phoneRow.visibility = View.GONE
-        }
+        emailView.text = email.ifBlank { "—" }
+        phoneView.text = phone.takeUnless { it.isNullOrBlank() } ?: "—"
 
         val initials = name.split(" ")
             .filter { it.isNotBlank() }

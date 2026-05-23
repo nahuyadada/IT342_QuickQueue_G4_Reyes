@@ -19,7 +19,7 @@ const PRIORITY_OPTIONS = [
 
 const ID_TYPES = {
   pwd:      ['PWD ID', 'PWD Booklet', 'Medical Certificate'],
-  senior:   ['Senior Citizen ID', 'OSCA ID', 'Gov't-issued ID with birthdate'],
+  senior:   ['Senior Citizen ID', 'OSCA ID', "Gov't-issued ID with birthdate"],
   pregnant: ['Pregnancy Record / Prenatal Booklet', 'Medical Certificate'],
 };
 

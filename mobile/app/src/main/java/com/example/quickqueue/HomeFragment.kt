@@ -76,10 +76,6 @@ class HomeFragment : Fragment() {
             }
         })
 
-        view.findViewById<LinearLayout>(R.id.btnMyTickets).setOnClickListener {
-            (activity as? DashboardActivity)?.navigateToTickets()
-        }
-
         loadOffices()
     }
 
@@ -197,53 +193,13 @@ class HomeFragment : Fragment() {
             )
         }
 
-        // Top row: status dot + name + type badge
-        val topRow = LinearLayout(ctx).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-
-        val dotRes = when (est.status) {
-            "green" -> R.drawable.bg_dot_green
-            "yellow" -> R.drawable.bg_dot_yellow
-            else -> R.drawable.bg_dot_red
-        }
-
-        val dot = View(ctx).apply {
-            layoutParams = LinearLayout.LayoutParams(dp(10), dp(10)).apply { marginEnd = dp(8) }
-            setBackgroundResource(dotRes)
-        }
-
+        // Name
         val nameText = TextView(ctx).apply {
             text = est.name
             setTextColor(Color.parseColor("#111827"))
             textSize = 16f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
-
-        val typeBadgeRes = when (est.category) {
-            "Bank" -> R.drawable.bg_badge_green
-            "Hospital" -> R.drawable.bg_badge_red
-            "Gov't Office" -> R.drawable.bg_badge_yellow
-            else -> R.drawable.bg_badge_blue
-        }
-        val typeBadge = TextView(ctx).apply {
-            text = if (est.category == "Other") est.type else est.category
-            textSize = 11f
-            setTextColor(when (est.category) {
-                "Bank" -> Color.parseColor("#166534")
-                "Hospital" -> Color.parseColor("#991B1B")
-                "Gov't Office" -> Color.parseColor("#92400E")
-                else -> Color.parseColor("#1D4ED8")
-            })
-            setBackgroundResource(typeBadgeRes)
-            setPadding(dp(8), dp(3), dp(8), dp(3))
-        }
-
-        topRow.addView(dot)
-        topRow.addView(nameText)
-        topRow.addView(typeBadge)
 
         // Address
         val branchText = TextView(ctx).apply {
@@ -253,27 +209,57 @@ class HomeFragment : Fragment() {
             setPadding(0, dp(2), 0, 0)
         }
 
-        // Stats
-        val statsText = TextView(ctx).apply {
-            text = "⏱ ~${est.waitMin} min  ·  👥 ${est.queueCount} in queue"
-            setTextColor(Color.parseColor("#6B7280"))
-            textSize = 12f
-            setPadding(0, dp(8), 0, 0)
+        // Stats row: colored dot + "X waiting  ⏱ Y mins"
+        val dotRes = when (est.status) {
+            "green" -> R.drawable.bg_dot_green
+            "yellow" -> R.drawable.bg_dot_yellow
+            else -> R.drawable.bg_dot_red
+        }
+        val dotColor = when (est.status) {
+            "green" -> Color.parseColor("#16A34A")
+            "yellow" -> Color.parseColor("#D97706")
+            else -> Color.parseColor("#DC2626")
         }
 
-        // Join hint
-        val joinHint = TextView(ctx).apply {
-            text = "Tap to view branch details →"
-            setTextColor(Color.parseColor("#4338CA"))
-            textSize = 12f
+        val statsRow = LinearLayout(ctx).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(0, dp(10), 0, 0)
+        }
+
+        val dot = View(ctx).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(8), dp(8)).apply { marginEnd = dp(6) }
+            setBackgroundResource(dotRes)
+        }
+
+        val waitingText = TextView(ctx).apply {
+            text = "${est.queueCount} waiting"
+            setTextColor(dotColor)
+            textSize = 13f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
-            setPadding(0, dp(6), 0, 0)
         }
 
-        content.addView(topRow)
+        val separatorText = TextView(ctx).apply {
+            text = "   ⏱"
+            setTextColor(Color.parseColor("#6B7280"))
+            textSize = 13f
+            setPadding(dp(8), 0, dp(2), 0)
+        }
+
+        val timeText = TextView(ctx).apply {
+            text = "~${est.waitMin} mins"
+            setTextColor(Color.parseColor("#6B7280"))
+            textSize = 13f
+        }
+
+        statsRow.addView(dot)
+        statsRow.addView(waitingText)
+        statsRow.addView(separatorText)
+        statsRow.addView(timeText)
+
+        content.addView(nameText)
         content.addView(branchText)
-        content.addView(statsText)
-        content.addView(joinHint)
+        content.addView(statsRow)
         card.addView(content)
         return card
     }
