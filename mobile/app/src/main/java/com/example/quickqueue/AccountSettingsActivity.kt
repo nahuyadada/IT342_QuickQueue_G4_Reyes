@@ -3,11 +3,11 @@ package com.example.quickqueue
 import android.app.AlertDialog
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
-import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.lifecycleScope
 import com.example.quickqueue.network.AuthRepository
 import com.google.android.material.button.MaterialButton
@@ -29,10 +29,7 @@ class AccountSettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_account_settings)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = ""
+        findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
 
         editFullName = findViewById(R.id.editFullName)
         editEmail = findViewById(R.id.editEmail)
@@ -107,20 +104,12 @@ class AccountSettingsActivity : AppCompatActivity() {
                 val new2 = editConfirm.text?.toString().orEmpty()
 
                 var valid = true
-                if (old.isBlank()) {
-                    layoutOld.error = "Required"
-                    valid = false
-                }
-                if (new1.length < 6) {
-                    layoutNew.error = "Minimum 6 characters"
-                    valid = false
-                }
+                if (old.isBlank()) { layoutOld.error = "Required"; valid = false }
+                if (new1.length < 6) { layoutNew.error = "Minimum 6 characters"; valid = false }
                 if (new2.isBlank()) {
-                    layoutConfirm.error = "Required"
-                    valid = false
+                    layoutConfirm.error = "Required"; valid = false
                 } else if (new1 != new2) {
-                    layoutConfirm.error = "Passwords do not match"
-                    valid = false
+                    layoutConfirm.error = "Passwords do not match"; valid = false
                 }
                 if (!valid) return@setOnClickListener
 
@@ -144,10 +133,5 @@ class AccountSettingsActivity : AppCompatActivity() {
         }
 
         dialog.show()
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
     }
 }

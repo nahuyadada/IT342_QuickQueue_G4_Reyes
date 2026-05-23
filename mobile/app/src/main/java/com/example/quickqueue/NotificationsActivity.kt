@@ -7,10 +7,10 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.quickqueue.network.NotificationStore
@@ -27,10 +27,7 @@ class NotificationsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_notifications)
 
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = ""
+        findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
 
         tvUnreadCount = findViewById(R.id.tvUnreadCount)
         emptyView = TextView(this).apply {
@@ -65,11 +62,6 @@ class NotificationsActivity : AppCompatActivity() {
     private fun updateUnreadCount(items: List<StoredNotification>) {
         val count = items.count { !it.isRead }
         tvUnreadCount.text = if (count > 0) "$count unread" else "All caught up"
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        finish()
-        return true
     }
 
     private inner class NotifAdapter(private val data: MutableList<StoredNotification>) :
