@@ -1,7 +1,9 @@
 package com.example.quickqueue
 
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,37 +13,15 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.quickqueue.network.NotificationStore
+import com.example.quickqueue.network.StoredNotification
 import com.google.android.material.card.MaterialCardView
-
-data class NotificationItem(
-    val id: Int,
-    val type: String,   // "green" | "yellow" | "blue"
-    val icon: String,
-    val title: String,
-    val subtitle: String,
-    val time: String,
-    var isRead: Boolean
-)
 
 class NotificationsActivity : AppCompatActivity() {
 
-    private val items = mutableListOf(
-        NotificationItem(1, "green",  "▶",  "You're next!",
-            "Please proceed to Counter 2 at BPI Makati.",
-            "just now", isRead = false),
-        NotificationItem(2, "yellow", "⏳", "3 customers ahead",
-            "You have 3 people ahead of you at PhilHealth Office.",
-            "5 min ago", isRead = false),
-        NotificationItem(3, "blue",   "🎟", "Queue joined successfully",
-            "You've joined the BPI queue. Ticket: BPI-A103.",
-            "2 hrs ago", isRead = true),
-        NotificationItem(4, "green",  "✅", "Service completed",
-            "Your service at Metro Bank has been completed. Thank you!",
-            "Yesterday", isRead = true)
-    )
-
     private lateinit var adapter: NotifAdapter
     private lateinit var tvUnreadCount: TextView
+    private lateinit var emptyView: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,21 +33,36 @@ class NotificationsActivity : AppCompatActivity() {
         supportActionBar?.title = ""
 
         tvUnreadCount = findViewById(R.id.tvUnreadCount)
-        updateUnreadCount()
+        emptyView = TextView(this).apply {
+            text = "No notifications yet.\nYou'll be notified when your queue status changes."
+            setTextColor(Color.parseColor("#6B7280"))
+            textSize = 14f
+            gravity = Gravity.CENTER
+            setPadding(48, 64, 48, 0)
+        }
+
+        val items = NotificationStore.getAll(this).toMutableList()
+        updateUnreadCount(items)
 
         adapter = NotifAdapter(items)
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(this)
         recyclerView.adapter = adapter
 
+        if (items.isEmpty()) {
+            recyclerView.visibility = View.GONE
+            (recyclerView.parent as ViewGroup).addView(emptyView)
+        }
+
         findViewById<TextView>(R.id.btnClearAll).setOnClickListener {
+            NotificationStore.markAllRead(this)
             items.forEach { it.isRead = true }
             adapter.notifyDataSetChanged()
-            updateUnreadCount()
+            updateUnreadCount(items)
         }
     }
 
-    private fun updateUnreadCount() {
+    private fun updateUnreadCount(items: List<StoredNotification>) {
         val count = items.count { !it.isRead }
         tvUnreadCount.text = if (count > 0) "$count unread" else "All caught up"
     }
@@ -77,7 +72,7 @@ class NotificationsActivity : AppCompatActivity() {
         return true
     }
 
-    private inner class NotifAdapter(private val data: MutableList<NotificationItem>) :
+    private inner class NotifAdapter(private val data: MutableList<StoredNotification>) :
         RecyclerView.Adapter<NotifAdapter.VH>() {
 
         inner class VH(view: View) : RecyclerView.ViewHolder(view) {
@@ -99,7 +94,7 @@ class NotificationsActivity : AppCompatActivity() {
 
             holder.tvTitle.text = item.title
             holder.tvSubtitle.text = item.subtitle
-            holder.tvTime.text = item.time
+            holder.tvTime.text = NotificationStore.formatTime(item.timeMillis)
             holder.tvIcon.text = item.icon
 
             val (iconBg, iconFg, cardBg) = when (item.type) {
@@ -113,25 +108,21 @@ class NotificationsActivity : AppCompatActivity() {
                     Color.parseColor("#92400E"),
                     if (item.isRead) Color.WHITE else Color.parseColor("#FFFBEB")
                 )
-                else -> Triple(  // blue
+                else -> Triple(
                     Color.parseColor("#DBEAFE"),
                     Color.parseColor("#1D4ED8"),
                     if (item.isRead) Color.WHITE else Color.parseColor("#EFF6FF")
                 )
             }
 
-            holder.tvIcon.setBackgroundColor(iconBg)
-            holder.tvIcon.setTextColor(iconFg)
-
-            // Make icon circle by setting equal width/height and rounded corners via code
             holder.tvIcon.post {
-                val size = holder.tvIcon.height
-                val bg = android.graphics.drawable.GradientDrawable()
-                bg.shape = android.graphics.drawable.GradientDrawable.OVAL
-                bg.setColor(iconBg)
+                val bg = GradientDrawable().apply {
+                    shape = GradientDrawable.OVAL
+                    setColor(iconBg)
+                }
                 holder.tvIcon.background = bg
             }
-
+            holder.tvIcon.setTextColor(iconFg)
             holder.card.setCardBackgroundColor(cardBg)
             holder.unreadDot.visibility = if (item.isRead) View.GONE else View.VISIBLE
         }

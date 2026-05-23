@@ -1,11 +1,24 @@
 package com.example.quickqueue
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.example.quickqueue.network.ApiClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class DashboardActivity : AppCompatActivity() {
 
@@ -17,6 +30,17 @@ class DashboardActivity : AppCompatActivity() {
     private lateinit var profileFragment: ProfileFragment
     private lateinit var activeFragment: Fragment
 
+    private val pollHandler = Handler(Looper.getMainLooper())
+    private val pollRunnable = object : Runnable {
+        override fun run() {
+            lifecycleScope.launch { QueueNotificationChecker.check(this@DashboardActivity) }
+            pollHandler.postDelayed(this, FOREGROUND_POLL_INTERVAL_MS)
+        }
+    }
+
+    private val notifPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* result ignored */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_dashboard)
@@ -24,10 +48,13 @@ class DashboardActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("quickqueue_prefs", MODE_PRIVATE)
         ApiClient.token = prefs.getString("token", null)
 
+        NotificationHelper.createChannel(this)
+        requestNotificationPermissionIfNeeded()
+        scheduleBackgroundPolling()
+
         bottomNav = findViewById(R.id.bottomNav)
 
         if (savedInstanceState == null) {
-            // First launch: create all fragments, show only Home.
             homeFragment = HomeFragment()
             mapFragment = MapFragment()
             ticketsFragment = TicketsFragment()
@@ -41,7 +68,6 @@ class DashboardActivity : AppCompatActivity() {
                 .add(R.id.fragmentContainer, homeFragment, "home")
                 .commit()
         } else {
-            // After rotation / process death: the fragment manager already restored instances.
             homeFragment = supportFragmentManager.findFragmentByTag("home") as HomeFragment
             mapFragment = supportFragmentManager.findFragmentByTag("map") as MapFragment
             ticketsFragment = supportFragmentManager.findFragmentByTag("tickets") as TicketsFragment
@@ -70,6 +96,17 @@ class DashboardActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Immediate check + foreground 30-second polling loop
+        pollHandler.post(pollRunnable)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        pollHandler.removeCallbacks(pollRunnable)
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         val tag = when (activeFragment) {
@@ -86,10 +123,36 @@ class DashboardActivity : AppCompatActivity() {
     }
 
     fun logout() {
+        WorkManager.getInstance(this).cancelUniqueWork(BACKGROUND_WORK_NAME)
         val prefs = getSharedPreferences("quickqueue_prefs", MODE_PRIVATE)
         prefs.edit().clear().apply()
         ApiClient.token = null
         startActivity(Intent(this, Login::class.java))
         finish()
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED
+            ) {
+                notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+    }
+
+    private fun scheduleBackgroundPolling() {
+        val request = PeriodicWorkRequestBuilder<QueuePollingWorker>(15, TimeUnit.MINUTES)
+            .build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            BACKGROUND_WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
+
+    companion object {
+        private const val BACKGROUND_WORK_NAME = "queue_status_poller"
+        private const val FOREGROUND_POLL_INTERVAL_MS = 30_000L
     }
 }

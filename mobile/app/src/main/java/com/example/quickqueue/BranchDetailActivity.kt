@@ -14,7 +14,9 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import com.example.quickqueue.network.NotificationStore
 import com.example.quickqueue.network.QueueRepository
+import com.example.quickqueue.network.StoredNotification
 import com.example.quickqueue.network.UserSession
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
@@ -384,6 +386,14 @@ class BranchDetailActivity : AppCompatActivity() {
 
             QueueRepository.joinQueue(userId, officeId)
                 .onSuccess { ticket ->
+                    NotificationStore.save(this@BranchDetailActivity, StoredNotification(
+                        id = System.currentTimeMillis(),
+                        type = "blue", icon = "🎟",
+                        title = "Queue joined!",
+                        subtitle = "Ticket ${ticket.ticketNumber} at $officeName. We'll notify you when your turn is near.",
+                        timeMillis = System.currentTimeMillis(),
+                        isRead = false
+                    ))
                     Toast.makeText(
                         this@BranchDetailActivity,
                         "🎉 Ticket ${ticket.ticketNumber} confirmed!",
