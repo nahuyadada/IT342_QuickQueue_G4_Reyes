@@ -1,8 +1,10 @@
+providers = []
+
 [phases.setup]
-nixPkgs = ["jdk21"]
+nixPkgs = ['jdk']
 
 [phases.build]
-cmds = ["chmod +x mvnw", "./mvnw clean package -DskipTests"]
+cmds = ['chmod +x mvnw && ./mvnw clean package -DskipTests']
 
 [start]
-cmd = "java -jar target/demo-0.0.1-SNAPSHOT.jar"
+cmd = 'java -jar target/demo-0.0.1-SNAPSHOT.jar'
