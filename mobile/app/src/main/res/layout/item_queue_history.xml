@@ -1,72 +1,173 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="10dp"
-    android:background="@drawable/bg_card"
-    android:elevation="2dp"
-    android:orientation="vertical"
-    android:padding="16dp">
+    app:cardBackgroundColor="@color/dash_card_bg"
+    app:cardCornerRadius="14dp"
+    app:cardElevation="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center_vertical">
+        android:orientation="vertical"
+        android:padding="16dp">
 
+        <!-- Row 1: Office name + status badge -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvOfficeName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/dash_text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvOfficeType"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/dash_text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
 
             <TextView
-                android:id="@+id/tvOfficeName"
+                android:id="@+id/tvStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Office Name"
-                android:textColor="#111827"
-                android:textSize="15sp"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvOfficeType"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="#6B7280"
-                android:textSize="12sp" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvStatus"
-            android:layout_width="wrap_content"
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginVertical="10dp"
+            android:background="@color/dash_border_light" />
+
+        <!-- Row 2: Ticket # and Date -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TICKET"
+                    android:textColor="@color/dash_text_secondary"
+                    android:textSize="10sp"
+                    android:letterSpacing="0.08" />
+
+                <TextView
+                    android:id="@+id/tvTicketNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/dash_text_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="DATE"
+                    android:textColor="@color/dash_text_secondary"
+                    android:textSize="10sp"
+                    android:letterSpacing="0.08" />
+
+                <TextView
+                    android:id="@+id/tvDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/dash_text_primary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Row 3: Wait Time and Feedback -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingHorizontal="10dp"
-            android:paddingVertical="4dp"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:layout_marginTop="10dp"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="WAIT TIME"
+                    android:textColor="@color/dash_text_secondary"
+                    android:textSize="10sp"
+                    android:letterSpacing="0.08" />
+
+                <TextView
+                    android:id="@+id/tvWaitTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/dash_text_primary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <!-- Feedback link (shown for served/completed tickets) -->
+            <TextView
+                android:id="@+id/tvFeedback"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="4dp"
+                android:text="Leave Feedback"
+                android:textColor="@color/dash_primary"
+                android:textSize="13sp"
+                android:visibility="gone" />
+
+            <!-- Feedback given indicator -->
+            <TextView
+                android:id="@+id/tvFeedbackGiven"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✓ Feedback Given"
+                android:textColor="#16A34A"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:id="@+id/tvTicketNumber"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textColor="#374151"
-            android:textSize="13sp" />
-
-        <TextView
-            android:id="@+id/tvDate"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#9CA3AF"
-            android:textSize="12sp" />
-    </LinearLayout>
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

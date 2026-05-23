@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.lifecycle.lifecycleScope
@@ -15,7 +16,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.quickqueue.network.QueueRepository
 import com.example.quickqueue.network.TicketDto
+import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class QueueHistoryActivity : AppCompatActivity() {
 
@@ -59,9 +63,7 @@ class QueueHistoryActivity : AppCompatActivity() {
                         recyclerView.visibility = View.VISIBLE
                     }
                 },
-                onFailure = {
-                    showEmpty()
-                }
+                onFailure = { showEmpty() }
             )
         }
     }
@@ -76,15 +78,21 @@ class QueueHistoryActivity : AppCompatActivity() {
         return true
     }
 
-    private class HistoryAdapter(private val items: List<TicketDto>) :
+    private inner class HistoryAdapter(private val items: List<TicketDto>) :
         RecyclerView.Adapter<HistoryAdapter.VH>() {
 
+        private val inputFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+        private val displayFmt = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
+
         inner class VH(view: View) : RecyclerView.ViewHolder(view) {
-            val officeName: TextView = view.findViewById(R.id.tvOfficeName)
-            val officeType: TextView = view.findViewById(R.id.tvOfficeType)
-            val status: TextView = view.findViewById(R.id.tvStatus)
-            val ticketNumber: TextView = view.findViewById(R.id.tvTicketNumber)
-            val date: TextView = view.findViewById(R.id.tvDate)
+            val tvOfficeName: TextView = view.findViewById(R.id.tvOfficeName)
+            val tvOfficeType: TextView = view.findViewById(R.id.tvOfficeType)
+            val tvStatus: TextView = view.findViewById(R.id.tvStatus)
+            val tvTicketNumber: TextView = view.findViewById(R.id.tvTicketNumber)
+            val tvDate: TextView = view.findViewById(R.id.tvDate)
+            val tvWaitTime: TextView = view.findViewById(R.id.tvWaitTime)
+            val tvFeedback: TextView = view.findViewById(R.id.tvFeedback)
+            val tvFeedbackGiven: TextView = view.findViewById(R.id.tvFeedbackGiven)
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
@@ -94,21 +102,57 @@ class QueueHistoryActivity : AppCompatActivity() {
 
         override fun onBindViewHolder(holder: VH, position: Int) {
             val ticket = items[position]
-            holder.officeName.text = ticket.officeName ?: "Unknown Office"
-            holder.officeType.text = ticket.officeType ?: ""
-            holder.ticketNumber.text = "Ticket #${ticket.ticketNumber}"
-            holder.date.text = ticket.createdAt?.take(10) ?: ""
 
-            val (label, bg, fg) = when (ticket.status.lowercase()) {
-                "served", "completed" -> Triple("Served", Color.parseColor("#D1FAE5"), Color.parseColor("#065F46"))
-                "cancelled" -> Triple("Cancelled", Color.parseColor("#FEE2E2"), Color.parseColor("#991B1B"))
-                "waiting" -> Triple("Waiting", Color.parseColor("#DBEAFE"), Color.parseColor("#1D4ED8"))
-                "serving" -> Triple("Serving", Color.parseColor("#FEF3C7"), Color.parseColor("#92400E"))
-                else -> Triple(ticket.status.replaceFirstChar { it.uppercase() }, Color.parseColor("#F3F4F6"), Color.parseColor("#374151"))
+            holder.tvOfficeName.text = ticket.officeName ?: "Unknown Office"
+            holder.tvOfficeType.text = ticket.officeType ?: ""
+            holder.tvTicketNumber.text = "#${ticket.ticketNumber}"
+            holder.tvDate.text = ticket.createdAt?.let { formatDate(it) } ?: "—"
+            holder.tvWaitTime.text = ticket.estimatedWaitMinutes
+                ?.let { if (it >= 60) "${it / 60}h ${it % 60}m" else "${it} min" }
+                ?: "—"
+
+            // Status badge
+            val (label, bg, fg) = statusStyle(ticket.status)
+            holder.tvStatus.text = label
+            holder.tvStatus.setBackgroundColor(bg)
+            holder.tvStatus.setTextColor(fg)
+
+            // Feedback — shown only for completed/served tickets
+            val isCompleted = ticket.status.lowercase() in listOf("served", "completed")
+            // In demo mode feedback state is not persisted — always show "Leave Feedback" for eligible
+            if (isCompleted) {
+                holder.tvFeedback.visibility = View.VISIBLE
+                holder.tvFeedbackGiven.visibility = View.GONE
+                holder.tvFeedback.setOnClickListener {
+                    Toast.makeText(this@QueueHistoryActivity, "Feedback feature coming soon", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                holder.tvFeedback.visibility = View.GONE
+                holder.tvFeedbackGiven.visibility = View.GONE
             }
-            holder.status.text = label
-            holder.status.setBackgroundColor(bg)
-            holder.status.setTextColor(fg)
+        }
+
+        private fun formatDate(raw: String): String {
+            return try {
+                val date = inputFmt.parse(raw.take(19)) ?: return raw.take(10)
+                displayFmt.format(date)
+            } catch (_: Exception) {
+                raw.take(10)
+            }
+        }
+
+        private fun statusStyle(status: String): Triple<String, Int, Int> = when (status.lowercase()) {
+            "served", "completed" ->
+                Triple("Served", Color.parseColor("#D1FAE5"), Color.parseColor("#065F46"))
+            "cancelled" ->
+                Triple("Cancelled", Color.parseColor("#FEE2E2"), Color.parseColor("#991B1B"))
+            "serving" ->
+                Triple("Serving", Color.parseColor("#FEF3C7"), Color.parseColor("#92400E"))
+            "waiting" ->
+                Triple("Waiting", Color.parseColor("#DBEAFE"), Color.parseColor("#1D4ED8"))
+            else ->
+                Triple(status.replaceFirstChar { it.uppercase() },
+                    Color.parseColor("#F3F4F6"), Color.parseColor("#374151"))
         }
     }
 }
