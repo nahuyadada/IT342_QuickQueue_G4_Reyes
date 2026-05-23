@@ -75,6 +75,7 @@ class MapFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val officesResult = QueueRepository.getOffices()
             val counts = QueueRepository.getQueueCounts().getOrDefault(emptyMap())
+            if (!isAdded) return@launch
 
             officesResult
                 .onSuccess { offices ->

@@ -74,20 +74,26 @@
                     android:textSize="14sp" />
             </LinearLayout>
 
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginVertical="10dp" android:background="#F1F5F9" />
-
             <LinearLayout
+                android:id="@+id/phoneRow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📱" android:textSize="16sp" />
-                <TextView
-                    android:layout_width="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginVertical="10dp" android:background="#F1F5F9" />
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:text="+63 917 123 4567"
-                    android:textColor="#374151"
-                    android:textSize="14sp" />
+                    android:gravity="center_vertical">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📱" android:textSize="16sp" />
+                    <TextView
+                        android:id="@+id/profilePhone"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="10dp"
+                        android:textColor="#374151"
+                        android:textSize="14sp" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 
@@ -107,7 +113,7 @@
                 android:gravity="center"
                 android:orientation="vertical"
                 android:paddingVertical="16dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="24" android:textColor="#2563EB" android:textSize="28sp" android:textStyle="bold" />
+                <TextView android:id="@+id/statQueuesJoined" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textColor="#2563EB" android:textSize="28sp" android:textStyle="bold" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Queues Joined" android:textColor="#6B7280" android:textSize="12sp" />
             </LinearLayout>
 
@@ -120,7 +126,7 @@
                 android:gravity="center"
                 android:orientation="vertical"
                 android:paddingVertical="16dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="8.5 hrs" android:textColor="#2563EB" android:textSize="28sp" android:textStyle="bold" />
+                <TextView android:id="@+id/statTimeSaved" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="—" android:textColor="#2563EB" android:textSize="28sp" android:textStyle="bold" />
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:text="Time Saved" android:textColor="#6B7280" android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
@@ -135,7 +141,7 @@
             android:orientation="vertical">
 
             <!-- Account Settings -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_ripple" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingHorizontal="16dp">
+            <LinearLayout android:id="@+id/menuAccountSettings" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_ripple" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingHorizontal="16dp">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚙️" android:textSize="18sp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:text="Account Settings" android:textColor="#111827" android:textSize="15sp" />
                 <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_chevron_right_24" android:contentDescription="Go" />
@@ -144,7 +150,7 @@
             <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginStart="46dp" android:background="#F1F5F9" />
 
             <!-- Notifications -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_ripple" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingHorizontal="16dp">
+            <LinearLayout android:id="@+id/menuNotifications" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_ripple" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingHorizontal="16dp">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔔" android:textSize="18sp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:text="Notifications" android:textColor="#111827" android:textSize="15sp" />
                 <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_chevron_right_24" android:contentDescription="Go" />
@@ -153,7 +159,7 @@
             <View android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginStart="46dp" android:background="#F1F5F9" />
 
             <!-- Queue History -->
-            <LinearLayout android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_ripple" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingHorizontal="16dp">
+            <LinearLayout android:id="@+id/menuQueueHistory" android:layout_width="match_parent" android:layout_height="52dp" android:background="@drawable/bg_ripple" android:clickable="true" android:focusable="true" android:gravity="center_vertical" android:paddingHorizontal="16dp">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📋" android:textSize="18sp" />
                 <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_marginStart="12dp" android:layout_weight="1" android:text="Queue History" android:textColor="#111827" android:textSize="15sp" />
                 <ImageView android:layout_width="20dp" android:layout_height="20dp" android:src="@drawable/ic_chevron_right_24" android:contentDescription="Go" />

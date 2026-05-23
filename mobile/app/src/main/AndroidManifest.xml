@@ -19,6 +19,21 @@
             android:name=".Registration"
             android:exported="false" />
         <activity
+            android:name=".AccountSettingsActivity"
+            android:exported="false"
+            android:label="Account Settings"
+            android:parentActivityName=".DashboardActivity" />
+        <activity
+            android:name=".NotificationsActivity"
+            android:exported="false"
+            android:label="Notifications"
+            android:parentActivityName=".DashboardActivity" />
+        <activity
+            android:name=".QueueHistoryActivity"
+            android:exported="false"
+            android:label="Queue History"
+            android:parentActivityName=".DashboardActivity" />
+        <activity
             android:name=".DashboardActivity"
             android:exported="false"
             android:label="@string/app_name"

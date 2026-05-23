@@ -43,6 +43,7 @@ class TicketsFragment : Fragment() {
         showLoading()
         viewLifecycleOwner.lifecycleScope.launch {
             val userId = UserSession.resolveUserId(requireContext())
+            if (!isAdded) return@launch
             if (userId == null) {
                 showEmpty("Session expired. Please log in again.")
                 return@launch
