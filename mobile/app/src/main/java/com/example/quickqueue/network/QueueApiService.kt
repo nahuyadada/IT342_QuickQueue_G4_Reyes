@@ -13,6 +13,14 @@ interface QueueApiService {
     @GET("api/offices")
     suspend fun getOffices(): Response<ApiDataResponse<List<OfficeDto>>>
 
+    /** Live waiting-count per office id. Wrapped in ApiResponse<Map<officeId, count>>. */
+    @GET("api/offices/queue-counts")
+    suspend fun getQueueCounts(): Response<ApiDataResponse<Map<String, Int>>>
+
+    /** All tickets belonging to a user, newest first. Wrapped in ApiResponse<List<TicketDto>>. */
+    @GET("api/queues/my-tickets")
+    suspend fun getMyTickets(@Query("userId") userId: Long): Response<ApiDataResponse<List<TicketDto>>>
+
     /** Join a queue. Wrapped in ApiResponse<TicketDto>. */
     @POST("api/queues/join")
     suspend fun joinQueue(

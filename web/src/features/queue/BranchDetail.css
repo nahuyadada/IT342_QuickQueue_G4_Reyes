@@ -1,0 +1,343 @@
+/* ── Branch Detail Page ── */
+
+.bd-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--qq-blue);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1rem;
+  transition: var(--qq-transition);
+}
+.bd-back-btn:hover { opacity: 0.7; }
+
+/* ── Header Card ── */
+.bd-header-card {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 55%, #3b82f6 100%);
+  border-radius: var(--qq-radius);
+  padding: 1.4rem;
+  margin-bottom: 0.75rem;
+  color: white;
+  box-shadow: 0 8px 30px rgba(37,99,235,0.28);
+  position: relative;
+  overflow: hidden;
+}
+.bd-header-card::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  pointer-events: none;
+}
+
+.bd-header-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 1rem;
+}
+.bd-icon { font-size: 2.5rem; flex-shrink: 0; line-height: 1; }
+.bd-header-info { flex: 1; min-width: 0; }
+
+.bd-type-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+}
+.bd-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: white;
+  line-height: 1.25;
+  margin-bottom: 5px;
+  word-break: break-word;
+}
+.bd-stars {
+  font-size: 1rem;
+  color: #fde68a;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.bd-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.bd-status-badge.low      { background: rgba(34,197,94,0.22);  color: #86efac; border: 1px solid rgba(34,197,94,0.35); }
+.bd-status-badge.moderate { background: rgba(234,179,8,0.22);  color: #fde68a; border: 1px solid rgba(234,179,8,0.35); }
+.bd-status-badge.long     { background: rgba(239,68,68,0.22);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.35); }
+
+.bd-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+.bd-stat-box {
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 12px;
+  padding: 0.8rem;
+  text-align: center;
+}
+.bd-stat-value { display: block; font-size: 1.65rem; font-weight: 800; color: white; line-height: 1; margin-bottom: 4px; }
+.bd-stat-label { display: block; font-size: 0.7rem; color: rgba(255,255,255,0.78); font-weight: 500; }
+
+.bd-contact-row { display: flex; flex-direction: column; gap: 6px; }
+.bd-contact-item { display: flex; align-items: flex-start; gap: 7px; font-size: 0.8rem; color: rgba(255,255,255,0.88); }
+.bd-contact-item svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+
+/* ── Section Cards ── */
+.bd-section {
+  background: var(--qq-card);
+  border: 1px solid var(--qq-slate-200);
+  border-radius: var(--qq-radius);
+  padding: 1rem 1.1rem;
+  margin-bottom: 0.75rem;
+  box-shadow: var(--qq-shadow);
+}
+.bd-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--qq-slate-400);
+  margin-bottom: 0.75rem;
+}
+.bd-section-sub {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--qq-slate-500);
+  margin: 0.75rem 0 0.4rem;
+}
+
+/* ── Booking Type Tabs ── */
+.bd-tab-switcher {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  background: var(--qq-slate-100);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 1rem;
+}
+.bd-tab {
+  padding: 0.55rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--qq-transition);
+  background: transparent;
+  color: var(--qq-slate-500);
+}
+.bd-tab.active {
+  background: var(--qq-card);
+  color: var(--qq-blue);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ── Date Chips ── */
+.bd-date-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  margin-bottom: 1rem;
+}
+.bd-date-scroll::-webkit-scrollbar { display: none; }
+
+.bd-date-chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 14px;
+  border: 1.5px solid var(--qq-slate-200);
+  border-radius: 10px;
+  background: var(--qq-card);
+  cursor: pointer;
+  transition: var(--qq-transition);
+  min-width: 54px;
+  user-select: none;
+}
+.bd-date-chip:hover { border-color: #bfdbfe; background: #f0f4ff; }
+.bd-date-chip.active { background: var(--qq-blue); border-color: var(--qq-blue); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.28); }
+.bd-date-chip .bd-day-name { font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; opacity: 0.7; }
+.bd-date-chip .bd-day-num  { font-size: 1.1rem; font-weight: 800; line-height: 1; margin: 2px 0 1px; }
+.bd-date-chip .bd-month    { font-size: 0.62rem; opacity: 0.7; }
+
+/* ── Time Slots ── */
+.bd-time-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.bd-time-chip {
+  padding: 0.5rem 0.25rem;
+  border: 1.5px solid var(--qq-slate-200);
+  border-radius: 8px;
+  background: var(--qq-card);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--qq-transition);
+  text-align: center;
+  color: var(--qq-slate-700);
+  user-select: none;
+}
+.bd-time-chip:hover { border-color: #bfdbfe; color: var(--qq-blue); background: #f0f4ff; }
+.bd-time-chip.active { background: var(--qq-blue); border-color: var(--qq-blue); color: white; box-shadow: 0 2px 8px rgba(37,99,235,0.25); }
+
+/* ── Priority Options ── */
+.bd-priority-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0.75rem;
+  border: 1.5px solid var(--qq-slate-200);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--qq-transition);
+  margin-bottom: 8px;
+  user-select: none;
+}
+.bd-priority-option:last-child { margin-bottom: 0; }
+.bd-priority-option:hover   { border-color: #bfdbfe; background: #f8faff; }
+.bd-priority-option.active  { border-color: var(--qq-blue); background: #eff6ff; }
+.bd-priority-option input[type="radio"] { accent-color: var(--qq-blue); width: 16px; height: 16px; flex-shrink: 0; cursor: pointer; }
+.bd-priority-icon  { font-size: 1.15rem; }
+.bd-priority-label { font-size: 0.88rem; font-weight: 600; color: var(--qq-slate-700); flex: 1; }
+
+/* ── ID Verification Form ── */
+.bd-id-form {
+  background: #f0f4ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 0.75rem;
+}
+.bd-id-form label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--qq-slate-500);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+.bd-id-form select,
+.bd-id-form input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--qq-slate-200);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  background: var(--qq-card);
+  color: var(--qq-slate-900);
+  outline: none;
+  transition: var(--qq-transition);
+  box-sizing: border-box;
+  margin-bottom: 0.75rem;
+  font-family: inherit;
+}
+.bd-id-form select:last-child,
+.bd-id-form input:last-child { margin-bottom: 0; }
+.bd-id-form select:focus,
+.bd-id-form input:focus { border-color: var(--qq-blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+/* ── Service Type ── */
+.bd-service-select {
+  width: 100%;
+  padding: 0.7rem 2.25rem 0.7rem 0.75rem;
+  border: 1.5px solid var(--qq-slate-200);
+  border-radius: 10px;
+  font-size: 0.88rem;
+  background: var(--qq-card);
+  color: var(--qq-slate-900);
+  outline: none;
+  transition: var(--qq-transition);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: inherit;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  box-sizing: border-box;
+}
+.bd-service-select:focus { border-color: var(--qq-blue); box-shadow: 0 0 0 3px rgba(37,99,235,0.12); }
+
+/* ── Circular Progress Ring ── */
+.bd-progress-section { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+.bd-ring-label { font-size: 0.78rem; color: var(--qq-slate-500); font-weight: 500; }
+
+.bd-notif-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 300px;
+  background: var(--qq-slate-50);
+  border: 1px solid var(--qq-slate-200);
+  border-radius: 10px;
+  padding: 0.65rem 1rem;
+}
+.bd-notif-label { font-size: 0.85rem; font-weight: 600; color: var(--qq-slate-700); display: flex; align-items: center; gap: 6px; }
+.bd-notif-toggle input[type="checkbox"] { width: 40px; height: 22px; accent-color: var(--qq-blue); cursor: pointer; }
+
+/* ── Join Button ── */
+.bd-join-btn {
+  width: 100%;
+  padding: 0.95rem;
+  border: none;
+  border-radius: var(--qq-radius);
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+  cursor: pointer;
+  transition: var(--qq-transition);
+  letter-spacing: 0.2px;
+  margin-bottom: 0.75rem;
+  background: linear-gradient(135deg, var(--qq-blue), var(--qq-blue-dark));
+  box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+  font-family: inherit;
+}
+.bd-join-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--qq-blue-dark), var(--qq-blue-darker));
+  box-shadow: 0 6px 20px rgba(37,99,235,0.42);
+  transform: translateY(-1px);
+}
+.bd-join-btn:disabled { background: var(--qq-slate-200); color: var(--qq-slate-400); box-shadow: none; cursor: not-allowed; transform: none; }
+
+/* ── Operating Hours ── */
+.bd-hours-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 0;
+  font-size: 0.85rem;
+}
+.bd-hours-row:not(:last-child) { border-bottom: 1px solid var(--qq-slate-100); }
+.bd-hours-day  { font-weight: 600; color: var(--qq-slate-700); min-width: 120px; }
+.bd-hours-time { color: var(--qq-slate-500); }
+.bd-hours-time.closed { color: var(--qq-red); font-weight: 600; }

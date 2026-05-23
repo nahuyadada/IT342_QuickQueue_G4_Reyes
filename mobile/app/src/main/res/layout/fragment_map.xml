@@ -1,19 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dash_bg"
-    android:orientation="vertical">
+    android:background="@color/dash_bg">
 
     <!-- ── Map Header ── -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:id="@+id/mapHeader"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@android:color/white"
         android:elevation="2dp"
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
-        android:paddingVertical="14dp">
+        android:paddingVertical="14dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:layout_width="wrap_content"
@@ -32,18 +36,24 @@
             android:textSize="13sp" />
     </LinearLayout>
 
-    <!-- ── WebView Map ── -->
+    <!-- ── WebView Map – fills all space between header and bottom panel ── -->
     <android.webkit.WebView
         android:id="@+id/mapWebView"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        app:layout_constraintBottom_toTopOf="@id/mapBottomPanel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/mapHeader" />
 
     <!-- ── Legend + Location List ── -->
     <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:maxHeight="260dp">
+        android:id="@+id/mapBottomPanel"
+        android:layout_width="0dp"
+        android:layout_height="240dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -122,4 +132,5 @@
                 android:orientation="vertical" />
         </LinearLayout>
     </ScrollView>
-</LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

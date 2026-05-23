@@ -1,38 +1,50 @@
 package com.example.quickqueue
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.example.quickqueue.network.QueueRepository
+import com.example.quickqueue.network.UserSession
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.launch
 
 class HomeFragment : Fragment() {
 
+    /** A service office merged with its live waiting count. */
     data class Establishment(
+        val id: Long,
         val name: String,
-        val branch: String,
-        val type: String,
-        val waitMin: Int,
-        val queueCount: Int,
-        val serviceDuration: String,
-        val status: String // "green", "yellow", "red"
-    )
+        val address: String,
+        val phone: String,
+        val type: String,      // raw backend type, e.g. "BANK"
+        val category: String,  // friendly filter category
+        val queueCount: Int
+    ) {
+        val waitMin: Int get() = queueCount * 5
+        val status: String get() = when {
+            queueCount >= 15 -> "red"
+            queueCount >= 6 -> "yellow"
+            else -> "green"
+        }
+    }
 
-    private val allEstablishments = listOf(
-        Establishment("BDO", "Makati Branch", "Bank", 5, 3, "~15 min", "green"),
-        Establishment("Manila Doctors Hospital", "Ermita, Manila", "Hospital", 15, 8, "~30 min", "yellow"),
-        Establishment("SSS Main Office", "Quezon City", "Gov't Office", 45, 23, "~20 min", "red"),
-        Establishment("BPI", "Ortigas Branch", "Bank", 3, 2, "~10 min", "green"),
-        Establishment("Philippine General Hospital", "Taft Ave, Manila", "Hospital", 60, 30, "~45 min", "red"),
-        Establishment("DFA Manila", "Aseana City, Parañaque", "Gov't Office", 25, 12, "~25 min", "yellow")
-    )
-
+    private var allEstablishments: List<Establishment> = emptyList()
     private var activeFilter = "All"
+    private var searchQuery = ""
+
     private lateinit var listContainer: LinearLayout
     private lateinit var chips: List<TextView>
 
@@ -55,11 +67,61 @@ class HomeFragment : Fragment() {
             chip.setOnClickListener { selectFilter(filter) }
         }
 
-        view.findViewById<LinearLayout>(R.id.btnMyTickets).setOnClickListener {
-            (activity as? DashboardActivity)?.navigateToTickets()
-        }
+        view.findViewById<EditText>(R.id.searchInput).addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                searchQuery = s?.toString()?.trim().orEmpty()
+                renderEstablishments()
+            }
+        })
 
-        renderEstablishments()
+        loadOffices()
+    }
+
+    /** Refresh whenever the tab is shown again (e.g. after joining a queue elsewhere). */
+    override fun onResume() {
+        super.onResume()
+        if (allEstablishments.isNotEmpty()) loadOffices()
+    }
+
+    private fun loadOffices() {
+        showMessage("Loading establishments…")
+        viewLifecycleOwner.lifecycleScope.launch {
+            val officesResult = QueueRepository.getOffices()
+            val counts = QueueRepository.getQueueCounts().getOrDefault(emptyMap())
+            if (!isAdded) return@launch
+
+            officesResult
+                .onSuccess { offices ->
+                    allEstablishments = offices.map { office ->
+                        Establishment(
+                            id = office.id,
+                            name = office.name,
+                            address = office.address.orEmpty().ifBlank { office.category.orEmpty() },
+                            phone = office.phoneNumber.orEmpty(),
+                            type = office.type,
+                            category = categoryOf(office.type),
+                            queueCount = counts[office.id] ?: 0
+                        )
+                    }
+                    renderEstablishments()
+                }
+                .onFailure { error ->
+                    showMessage(error.message ?: "Unable to load establishments.")
+                }
+        }
+    }
+
+    /** Maps a raw backend office type onto one of the home-screen filter chips. */
+    private fun categoryOf(type: String): String {
+        val t = type.uppercase()
+        return when {
+            t.contains("BANK") -> "Bank"
+            t.contains("HOSPITAL") || t.contains("CLINIC") || t.contains("DENTAL") -> "Hospital"
+            t.contains("GOV") -> "Gov't Office"
+            else -> "Other"
+        }
     }
 
     private fun selectFilter(filter: String) {
@@ -80,10 +142,29 @@ class HomeFragment : Fragment() {
 
     private fun renderEstablishments() {
         listContainer.removeAllViews()
-        val filtered = if (activeFilter == "All") allEstablishments
-            else allEstablishments.filter { it.type == activeFilter }
+
+        val filtered = allEstablishments
+            .filter { activeFilter == "All" || it.category == activeFilter }
+            .filter { searchQuery.isBlank() || it.name.contains(searchQuery, ignoreCase = true) }
+
+        if (filtered.isEmpty()) {
+            showMessage("No establishments match your filters.")
+            return
+        }
 
         filtered.forEach { est -> listContainer.addView(createEstablishmentCard(est)) }
+    }
+
+    private fun showMessage(message: String) {
+        listContainer.removeAllViews()
+        val dp = { v: Int -> (v * resources.displayMetrics.density).toInt() }
+        listContainer.addView(TextView(requireContext()).apply {
+            text = message
+            setTextColor(Color.parseColor("#6B7280"))
+            textSize = 14f
+            gravity = Gravity.CENTER
+            setPadding(0, dp(32), 0, dp(32))
+        })
     }
 
     private fun createEstablishmentCard(est: Establishment): View {
@@ -99,6 +180,9 @@ class HomeFragment : Fragment() {
             cardElevation = dp(3).toFloat()
             setCardBackgroundColor(Color.WHITE)
             setContentPadding(dp(16), dp(14), dp(16), dp(14))
+            isClickable = true
+            isFocusable = true
+            setOnClickListener { openBranchDetail(est) }
         }
 
         val content = LinearLayout(ctx).apply {
@@ -109,85 +193,115 @@ class HomeFragment : Fragment() {
             )
         }
 
-        // Top row: name + status dot
-        val topRow = LinearLayout(ctx).apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.CENTER_VERTICAL
-        }
-
-        val dotRes = when (est.status) {
-            "green" -> R.drawable.bg_dot_green
-            "yellow" -> R.drawable.bg_dot_yellow
-            else -> R.drawable.bg_dot_red
-        }
-
-        val dot = View(ctx).apply {
-            layoutParams = LinearLayout.LayoutParams(dp(10), dp(10)).apply { marginEnd = dp(8) }
-            setBackgroundResource(dotRes)
-        }
-
+        // Name
         val nameText = TextView(ctx).apply {
             text = est.name
             setTextColor(Color.parseColor("#111827"))
             textSize = 16f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
-            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f)
         }
 
-        val typeBadgeRes = when (est.type) {
-            "Bank" -> R.drawable.bg_badge_green
-            "Hospital" -> R.drawable.bg_badge_red
-            else -> R.drawable.bg_badge_yellow
-        }
-        val typeBadge = TextView(ctx).apply {
-            text = est.type
-            textSize = 11f
-            setTextColor(when (est.type) {
-                "Bank" -> Color.parseColor("#166534")
-                "Hospital" -> Color.parseColor("#991B1B")
-                else -> Color.parseColor("#92400E")
-            })
-            setBackgroundResource(typeBadgeRes)
-            setPadding(dp(8), dp(3), dp(8), dp(3))
-        }
-
-        topRow.addView(dot)
-        topRow.addView(nameText)
-        topRow.addView(typeBadge)
-
-        // Branch
+        // Address
         val branchText = TextView(ctx).apply {
-            text = est.branch
+            text = est.address.ifBlank { "Address unavailable" }
             setTextColor(Color.parseColor("#6B7280"))
             textSize = 13f
             setPadding(0, dp(2), 0, 0)
         }
 
-        // Bottom row: stats
-        val bottomRow = LinearLayout(ctx).apply {
+        // Stats row: colored dot + "X waiting  ⏱ Y mins"
+        val dotRes = when (est.status) {
+            "green" -> R.drawable.bg_dot_green
+            "yellow" -> R.drawable.bg_dot_yellow
+            else -> R.drawable.bg_dot_red
+        }
+        val dotColor = when (est.status) {
+            "green" -> Color.parseColor("#16A34A")
+            "yellow" -> Color.parseColor("#D97706")
+            else -> Color.parseColor("#DC2626")
+        }
+
+        val statsRow = LinearLayout(ctx).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(0, dp(8), 0, 0)
+            setPadding(0, dp(10), 0, 0)
         }
 
-        val statusLabel = when (est.status) {
-            "green" -> "Low wait"
-            "yellow" -> "Moderate"
-            else -> "Long wait"
+        val dot = View(ctx).apply {
+            layoutParams = LinearLayout.LayoutParams(dp(8), dp(8)).apply { marginEnd = dp(6) }
+            setBackgroundResource(dotRes)
         }
 
-        val statsText = TextView(ctx).apply {
-            text = "⏱ ${est.waitMin} min  ·  👥 ${est.queueCount} in queue  ·  🕐 ${est.serviceDuration}"
+        val waitingText = TextView(ctx).apply {
+            text = "${est.queueCount} waiting"
+            setTextColor(dotColor)
+            textSize = 13f
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+        }
+
+        val separatorText = TextView(ctx).apply {
+            text = "   ⏱"
             setTextColor(Color.parseColor("#6B7280"))
-            textSize = 12f
+            textSize = 13f
+            setPadding(dp(8), 0, dp(2), 0)
         }
 
-        bottomRow.addView(statsText)
+        val timeText = TextView(ctx).apply {
+            text = "~${est.waitMin} mins"
+            setTextColor(Color.parseColor("#6B7280"))
+            textSize = 13f
+        }
 
-        content.addView(topRow)
+        statsRow.addView(dot)
+        statsRow.addView(waitingText)
+        statsRow.addView(separatorText)
+        statsRow.addView(timeText)
+
+        content.addView(nameText)
         content.addView(branchText)
-        content.addView(bottomRow)
+        content.addView(statsRow)
         card.addView(content)
         return card
+    }
+
+    private fun openBranchDetail(est: Establishment) {
+        val intent = Intent(requireContext(), BranchDetailActivity::class.java).apply {
+            putExtra("office_id",       est.id)
+            putExtra("office_name",     est.name)
+            putExtra("office_type",     est.type)
+            putExtra("office_category", est.category)
+            putExtra("office_address",  est.address)
+            putExtra("office_phone",    est.phone)
+            putExtra("queue_count",     est.queueCount)
+            putExtra("wait_min",        est.waitMin)
+        }
+        startActivity(intent)
+    }
+
+    private fun joinQueue(est: Establishment) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val userId = UserSession.resolveUserId(requireContext())
+            if (userId == null) {
+                Toast.makeText(requireContext(), "Session expired. Please log in again.", Toast.LENGTH_LONG).show()
+                return@launch
+            }
+
+            QueueRepository.joinQueue(userId, est.id)
+                .onSuccess { ticket ->
+                    Toast.makeText(
+                        requireContext(),
+                        "Joined ${est.name} — ticket ${ticket.ticketNumber}",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    (activity as? DashboardActivity)?.navigateToTickets()
+                }
+                .onFailure { error ->
+                    Toast.makeText(
+                        requireContext(),
+                        error.message ?: "Could not join the queue.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+        }
     }
 }

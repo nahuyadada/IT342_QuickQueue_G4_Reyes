@@ -50,7 +50,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**",
                             "/api/integration/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/offices").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/offices", "/api/offices/queue-counts").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

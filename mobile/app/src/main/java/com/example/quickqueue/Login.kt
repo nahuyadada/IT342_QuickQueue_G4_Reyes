@@ -71,18 +71,18 @@ class Login : AppCompatActivity() {
             if (result.success) {
                 textError.visibility = View.GONE
 
-                // Persist the token so the dashboard (and future launches) can use it.
+                // Persist the token + user identity so the dashboard (and future
+                // launches) can call authenticated endpoints without re-fetching.
                 val prefs = getSharedPreferences("quickqueue_prefs", MODE_PRIVATE)
-                result.token?.let { token ->
-                    ApiClient.token = token
-                    prefs.edit().putString("token", token).apply()
-                }
+                result.token?.let { ApiClient.token = it }
 
-                // Store minimal user info (email for now; the dashboard will
-                // resolve the full profile from /api/auth/me).
-                prefs.edit()
-                    .putString("user_email", email)
-                    .apply()
+                prefs.edit().apply {
+                    result.token?.let { putString("token", it) }
+                    result.userId?.let { putLong("user_id", it) }
+                    putString("user_name", result.name ?: "")
+                    putString("user_email", result.email ?: email)
+                    apply()
+                }
 
                 Toast.makeText(this@Login, result.message, Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this@Login, DashboardActivity::class.java))

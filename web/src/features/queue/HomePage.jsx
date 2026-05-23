@@ -170,7 +170,7 @@ export default function HomePage() {
         )}
 
         {filtered.map(office => (
-          <div key={office.id} className="cust-estab-card" onClick={() => navigate('/dashboard/map')}>
+          <div key={office.id} className="cust-estab-card" onClick={() => navigate(`/dashboard/branch/${office.id}`, { state: { office } })}>
             <div className="cust-estab-bar green" />
             <div className="cust-estab-body">
               <div className="cust-estab-header">

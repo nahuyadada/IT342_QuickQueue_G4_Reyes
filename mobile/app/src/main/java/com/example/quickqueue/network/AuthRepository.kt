@@ -18,6 +18,28 @@ object AuthRepository {
         }
     }
 
+    suspend fun changePassword(oldPassword: String, newPassword: String): AuthResult {
+        return try {
+            val response = ApiClient.authApiService.changePassword(
+                ChangePasswordRequest(oldPassword, newPassword)
+            )
+            val body = response.body()
+            if (response.isSuccessful) {
+                if (body?.success == false) {
+                    AuthResult(success = false, message = body.error?.message?.takeIf { it.isNotBlank() } ?: "Request failed")
+                } else {
+                    AuthResult(success = true, message = "Password changed successfully")
+                }
+            } else {
+                AuthResult(success = false, message = parseErrorMessage(response.errorBody()?.string()))
+            }
+        } catch (_: IOException) {
+            AuthResult(success = false, message = "Cannot connect to backend.")
+        } catch (ex: Exception) {
+            AuthResult(success = false, message = ex.localizedMessage ?: "Unexpected error occurred")
+        }
+    }
+
     private suspend fun executeAuthCall(call: suspend () -> Response<AuthApiResponse>): AuthResult {
         return try {
             val response = call()
@@ -35,7 +57,14 @@ object AuthRepository {
                     ?: "Request successful"
                 val token = authPayload?.token ?: body?.token
 
-                AuthResult(success = true, message = message, token = token)
+                AuthResult(
+                    success = true,
+                    message = message,
+                    token = token,
+                    userId = authPayload?.id,
+                    name = authPayload?.name,
+                    email = authPayload?.email
+                )
             } else {
                 val errorMessage = parseErrorMessage(response.errorBody()?.string())
                 AuthResult(success = false, message = errorMessage)
@@ -74,10 +103,6 @@ object AuthRepository {
         } catch (_: Exception) {
             "Request failed"
         }
-    }
-
-    private fun String?.isNullOrBlank(): Boolean {
-        return this == null || this.isBlank()
     }
 
     private fun AuthApiResponse.toLegacyAuthResponse(): AuthResponse? {
