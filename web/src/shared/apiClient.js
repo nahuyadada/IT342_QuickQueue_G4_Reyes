@@ -8,7 +8,7 @@
  *         and error parsing. Services just call apiClient.post('/path', data).
  */
 
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:8080/api';
 
 /**
  * Parse JSON response and throw on errors.
