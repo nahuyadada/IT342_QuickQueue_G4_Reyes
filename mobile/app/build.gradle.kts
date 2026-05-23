@@ -14,8 +14,7 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        // Emulator -> 10.0.2.2, backend currently reachable on port 8080.
-        buildConfigField("String", "BACKEND_BASE_URL", "\"http://10.0.2.2:8080/\"")
+        buildConfigField("String", "BACKEND_BASE_URL", "\"https://it342-quickqueue-g4-reyes.onrender.com/\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
