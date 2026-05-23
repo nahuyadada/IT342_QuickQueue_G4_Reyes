@@ -34,3 +34,7 @@ export const getCurrentUserProfile = async () => {
 export const updateCurrentUserProfile = async ({ name }) => {
   return apiClient.patch('/auth/me', { name });
 };
+
+export const changePassword = async (oldPassword, newPassword) => {
+  return apiClient.patch('/auth/password', { oldPassword, newPassword });
+};

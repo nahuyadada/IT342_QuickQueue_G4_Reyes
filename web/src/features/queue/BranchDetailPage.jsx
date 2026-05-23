@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { getCurrentUserProfile } from '../auth/authService';
 import { getOffices, getQueueCounts, joinQueue } from './queueService';
+import { addWebNotification } from '../profile/ProfilePage';
 import './CustomerPortal.css';
 import './BranchDetail.css';
 
@@ -180,6 +181,7 @@ export default function BranchDetailPage() {
       }
       const ticket = await joinQueue(userId, office.id);
       localStorage.setItem('activeTicketId', String(ticket.ticketId));
+      addWebNotification({ type: 'blue', icon: '🎟', title: 'Queue joined!', subtitle: `Ticket #${ticket.ticketNumber} at ${office.name}` });
       setJoinSuccess(`🎉 Ticket #${ticket.ticketNumber} confirmed! Redirecting…`);
       setTimeout(() => navigate('/dashboard/queues'), 2000);
     } catch (e) {
