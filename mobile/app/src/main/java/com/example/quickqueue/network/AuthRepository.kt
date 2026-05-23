@@ -18,6 +18,28 @@ object AuthRepository {
         }
     }
 
+    suspend fun changePassword(oldPassword: String, newPassword: String): AuthResult {
+        return try {
+            val response = ApiClient.authApiService.changePassword(
+                ChangePasswordRequest(oldPassword, newPassword)
+            )
+            val body = response.body()
+            if (response.isSuccessful) {
+                if (body?.success == false) {
+                    AuthResult(success = false, message = body.error?.message?.takeIf { it.isNotBlank() } ?: "Request failed")
+                } else {
+                    AuthResult(success = true, message = "Password changed successfully")
+                }
+            } else {
+                AuthResult(success = false, message = parseErrorMessage(response.errorBody()?.string()))
+            }
+        } catch (_: IOException) {
+            AuthResult(success = false, message = "Cannot connect to backend.")
+        } catch (ex: Exception) {
+            AuthResult(success = false, message = ex.localizedMessage ?: "Unexpected error occurred")
+        }
+    }
+
     private suspend fun executeAuthCall(call: suspend () -> Response<AuthApiResponse>): AuthResult {
         return try {
             val response = call()

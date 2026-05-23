@@ -38,6 +38,11 @@ data class AuthResponse(
     val error: String? = null
 )
 
+data class ChangePasswordRequest(
+    val oldPassword: String,
+    val newPassword: String
+)
+
 data class AuthResult(
     val success: Boolean,
     val message: String,

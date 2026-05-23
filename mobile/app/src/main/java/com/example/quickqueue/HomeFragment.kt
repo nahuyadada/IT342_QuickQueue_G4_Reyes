@@ -1,5 +1,6 @@
 package com.example.quickqueue
 
+import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
@@ -27,6 +28,7 @@ class HomeFragment : Fragment() {
         val id: Long,
         val name: String,
         val address: String,
+        val phone: String,
         val type: String,      // raw backend type, e.g. "BANK"
         val category: String,  // friendly filter category
         val queueCount: Int
@@ -101,6 +103,7 @@ class HomeFragment : Fragment() {
                             id = office.id,
                             name = office.name,
                             address = office.address.orEmpty().ifBlank { office.category.orEmpty() },
+                            phone = office.phoneNumber.orEmpty(),
                             type = office.type,
                             category = categoryOf(office.type),
                             queueCount = counts[office.id] ?: 0
@@ -183,7 +186,7 @@ class HomeFragment : Fragment() {
             setContentPadding(dp(16), dp(14), dp(16), dp(14))
             isClickable = true
             isFocusable = true
-            setOnClickListener { confirmJoinQueue(est) }
+            setOnClickListener { openBranchDetail(est) }
         }
 
         val content = LinearLayout(ctx).apply {
@@ -260,7 +263,7 @@ class HomeFragment : Fragment() {
 
         // Join hint
         val joinHint = TextView(ctx).apply {
-            text = "Tap to join this queue →"
+            text = "Tap to view branch details →"
             setTextColor(Color.parseColor("#4338CA"))
             textSize = 12f
             setTypeface(typeface, android.graphics.Typeface.BOLD)
@@ -275,13 +278,18 @@ class HomeFragment : Fragment() {
         return card
     }
 
-    private fun confirmJoinQueue(est: Establishment) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Join queue")
-            .setMessage("Join the queue at ${est.name}? You'll get a ticket and ~${est.waitMin} min estimated wait.")
-            .setPositiveButton("Join") { _, _ -> joinQueue(est) }
-            .setNegativeButton("Cancel", null)
-            .show()
+    private fun openBranchDetail(est: Establishment) {
+        val intent = Intent(requireContext(), BranchDetailActivity::class.java).apply {
+            putExtra("office_id",       est.id)
+            putExtra("office_name",     est.name)
+            putExtra("office_type",     est.type)
+            putExtra("office_category", est.category)
+            putExtra("office_address",  est.address)
+            putExtra("office_phone",    est.phone)
+            putExtra("queue_count",     est.queueCount)
+            putExtra("wait_min",        est.waitMin)
+        }
+        startActivity(intent)
     }
 
     private fun joinQueue(est: Establishment) {

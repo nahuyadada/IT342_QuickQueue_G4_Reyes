@@ -17,6 +17,7 @@ import ActiveQueuesPage from './features/queue/ActiveQueuesPage';
 import BusinessRegistrationPage from './features/queue/BusinessRegistrationPage';
 import MyRegistrationsPage from './features/queue/MyRegistrationsPage';
 import BusinessDashboardPage from './features/queue/BusinessDashboardPage';
+import BranchDetailPage from './features/queue/BranchDetailPage';
 
 // Queue feature — Partner
 import PendingApplicationPage from './features/queue/PendingApplicationPage';
@@ -75,6 +76,7 @@ function App() {
           <Route path="queues" element={<ActiveQueuesPage />} />
           <Route path="my-registrations" element={<MyRegistrationsPage />} />
           <Route path="business/:officeId" element={<BusinessDashboardPage />} />
+          <Route path="branch/:officeId" element={<BranchDetailPage />} />
           <Route path="profile" element={<ProfilePage />} />
 
           {/* Partner routes */}

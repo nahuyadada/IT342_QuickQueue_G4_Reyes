@@ -34,6 +34,11 @@
             android:label="Queue History"
             android:parentActivityName=".DashboardActivity" />
         <activity
+            android:name=".BranchDetailActivity"
+            android:exported="false"
+            android:label="Branch Detail"
+            android:parentActivityName=".DashboardActivity" />
+        <activity
             android:name=".DashboardActivity"
             android:exported="false"
             android:label="@string/app_name"
