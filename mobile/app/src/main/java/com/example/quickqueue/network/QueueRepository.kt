@@ -24,6 +24,36 @@ object QueueRepository {
         }
     }
 
+    /** GET /api/offices/queue-counts — waiting count per office id. */
+    suspend fun getQueueCounts(): Result<Map<Long, Int>> = runCatching {
+        val response = api.getQueueCounts()
+        if (response.isSuccessful) {
+            val body = response.body()
+            if (body?.success == false) {
+                throw IOException(body.error?.message ?: "Request failed")
+            }
+            (body?.data ?: emptyMap())
+                .mapNotNull { (key, value) -> key.toLongOrNull()?.let { it to value } }
+                .toMap()
+        } else {
+            throw IOException(parseError(response.errorBody()?.string()))
+        }
+    }
+
+    /** GET /api/queues/my-tickets — every ticket belonging to the user. */
+    suspend fun getMyTickets(userId: Long): Result<List<TicketDto>> = runCatching {
+        val response = api.getMyTickets(userId)
+        if (response.isSuccessful) {
+            val body = response.body()
+            if (body?.success == false) {
+                throw IOException(body.error?.message ?: "Request failed")
+            }
+            body?.data ?: emptyList()
+        } else {
+            throw IOException(parseError(response.errorBody()?.string()))
+        }
+    }
+
     /** POST /api/queues/join — join a queue. */
     suspend fun joinQueue(userId: Long, officeId: Long): Result<TicketDto> = runCatching {
         val response = api.joinQueue(userId, officeId)

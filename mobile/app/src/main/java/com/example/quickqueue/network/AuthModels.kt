@@ -28,6 +28,10 @@ data class ApiError(
 )
 
 data class AuthResponse(
+    val id: Long? = null,
+    val name: String? = null,
+    val email: String? = null,
+    val role: String? = null,
     val message: String? = null,
     val token: String? = null,
     val success: Boolean? = null,
@@ -37,5 +41,8 @@ data class AuthResponse(
 data class AuthResult(
     val success: Boolean,
     val message: String,
-    val token: String? = null
+    val token: String? = null,
+    val userId: Long? = null,
+    val name: String? = null,
+    val email: String? = null
 )

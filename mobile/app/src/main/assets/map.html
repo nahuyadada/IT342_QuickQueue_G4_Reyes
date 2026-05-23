@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="leaflet.css"/>
+<script src="leaflet.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body,#map{width:100%;height:100%}
@@ -103,34 +103,9 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '© OpenStreetMap', maxZoom: 18
 }).addTo(map);
 
-// ── Real Cebu branches with simulated queue data ───────────────────────────
-var places = [
-  // ── Banks ──
-  { name:"HSBC Philippines",                            type:"Bank",             lat:10.3158, lng:123.8854, count:3,  wait:15  },
-  { name:"UnionBank – Cebu IT Park",                    type:"Bank",             lat:10.3310, lng:123.9065, count:18, wait:90  },
-  { name:"BPI Cebu Main Branch",                        type:"Bank",             lat:10.2963, lng:123.9020, count:22, wait:110 },
-  { name:"Philippine Savings Bank – Cebu Uptown",       type:"Bank",             lat:10.3175, lng:123.9050, count:9,  wait:45  },
-  { name:"UnionBank Insular Building",                  type:"Bank",             lat:10.3178, lng:123.9055, count:5,  wait:25  },
-
-  // ── Dental Clinics ──
-  { name:"Affinity Dental Clinics Cebu",                type:"Dental Clinic",    lat:10.3312, lng:123.9068, count:7,  wait:35  },
-  { name:"D&G Dental Clinic",                           type:"Dental Clinic",    lat:10.3085, lng:123.8948, count:2,  wait:10  },
-  { name:"Cebu Dental Care Center",                     type:"Dental Clinic",    lat:10.3140, lng:123.8935, count:11, wait:55  },
-  { name:"Metro Dental SM City Cebu",                   type:"Dental Clinic",    lat:10.3115, lng:123.9189, count:20, wait:100 },
-  { name:"Green Apple Dental Clinic",                   type:"Dental Clinic",    lat:10.3173, lng:123.9058, count:4,  wait:20  },
-
-  // ── Hospitals ──
-  { name:"Cebu Doctors' University Hospital",           type:"Hospital",         lat:10.3113, lng:123.8952, count:25, wait:125 },
-  { name:"St. Vincent General Hospital",                type:"Hospital",         lat:10.3098, lng:123.8925, count:8,  wait:40  },
-  { name:"Adventist Hospital Cebu",                     type:"Hospital",         lat:10.3180, lng:123.8850, count:6,  wait:30  },
-  { name:"VisayasMed Hospital",                         type:"Hospital",         lat:10.3095, lng:123.8970, count:17, wait:85  },
-
-  // ── Government Offices ──
-  { name:"Cebu City Hall",                              type:"Gov't Office",     lat:10.2933, lng:123.9019, count:24, wait:120 },
-  { name:"Office of the Building Official",             type:"Gov't Office",     lat:10.2935, lng:123.9022, count:19, wait:95  },
-  { name:"Human Resource Development Office",           type:"Gov't Office",     lat:10.2937, lng:123.9025, count:13, wait:65  },
-  { name:"Public Services Office",                      type:"Gov't Office",     lat:10.3080, lng:123.8965, count:10, wait:50  }
-];
+// Markers live in their own layer so they can be cleared and re-rendered
+// whenever fresh office data arrives from the Android host.
+var markerLayer = L.layerGroup().addTo(map);
 
 function getDensity(count) {
   if (count >= 15) return { color:'#EF4444', label:'Busy',     badgeClass:'badge-red',    pulse:true  };
@@ -138,50 +113,68 @@ function getDensity(count) {
   return              { color:'#22C55E', label:'Low',      badgeClass:'badge-green',  pulse:false };
 }
 
-places.forEach(function(p) {
-  var d = getDensity(p.count);
+function renderPlaces(places) {
+  markerLayer.clearLayers();
+  var bounds = [];
 
-  // Build marker HTML
-  var pulse = d.pulse
-    ? '<div class="pulse-ring" style="background:' + d.color + '33"></div>'
-    : '';
-  var iconHtml =
-    '<div style="position:relative;width:20px;height:20px">' +
-      pulse +
-      '<div style="position:absolute;inset:0;width:20px;height:20px;border-radius:50%;' +
-           'background:' + d.color + ';border:3px solid white;' +
-           'box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>' +
-    '</div>';
+  places.forEach(function(p) {
+    var d = getDensity(p.count);
 
-  var icon = L.divIcon({
-    className: '',
-    html: iconHtml,
-    iconSize: [20, 20],
-    iconAnchor: [10, 10]
+    var pulse = d.pulse
+      ? '<div class="pulse-ring" style="background:' + d.color + '33"></div>'
+      : '';
+    var iconHtml =
+      '<div style="position:relative;width:20px;height:20px">' +
+        pulse +
+        '<div style="position:absolute;inset:0;width:20px;height:20px;border-radius:50%;' +
+             'background:' + d.color + ';border:3px solid white;' +
+             'box-shadow:0 2px 8px rgba(0,0,0,.35)"></div>' +
+      '</div>';
+
+    var icon = L.divIcon({
+      className: '',
+      html: iconHtml,
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+
+    var popup =
+      '<div class="qq-popup">' +
+        '<div class="title">' + p.name + '</div>' +
+        '<div class="type">' + p.type + '</div>' +
+        '<div class="stats">' +
+          '<div class="stat-box">' +
+            '<div class="stat-num" style="color:' + d.color + '">' + p.count + '</div>' +
+            '<div class="stat-lbl">Waiting</div>' +
+          '</div>' +
+          '<div class="stat-box">' +
+            '<div class="stat-num" style="color:#6B7280">~' + p.wait + '</div>' +
+            '<div class="stat-lbl">Est. wait (min)</div>' +
+          '</div>' +
+        '</div>' +
+        '<span class="badge ' + d.badgeClass + '">' + d.label + ' Queue</span>' +
+      '</div>';
+
+    L.marker([p.lat, p.lng], { icon: icon })
+      .addTo(markerLayer)
+      .bindPopup(popup, { closeButton: false, maxWidth: 230 });
+
+    bounds.push([p.lat, p.lng]);
   });
 
-  // Build popup HTML
-  var popup =
-    '<div class="qq-popup">' +
-      '<div class="title">' + p.name + '</div>' +
-      '<div class="type">' + p.type + '</div>' +
-      '<div class="stats">' +
-        '<div class="stat-box">' +
-          '<div class="stat-num" style="color:' + d.color + '">' + p.count + '</div>' +
-          '<div class="stat-lbl">Waiting</div>' +
-        '</div>' +
-        '<div class="stat-box">' +
-          '<div class="stat-num" style="color:#6B7280">~' + p.wait + '</div>' +
-          '<div class="stat-lbl">Est. wait (min)</div>' +
-        '</div>' +
-      '</div>' +
-      '<span class="badge ' + d.badgeClass + '">' + d.label + ' Queue</span>' +
-    '</div>';
+  if (bounds.length > 0) {
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+  }
+}
 
-  L.marker([p.lat, p.lng], { icon: icon })
-    .addTo(map)
-    .bindPopup(popup, { closeButton: false, maxWidth: 230 });
-});
+// Entry point called by the Android host: qqRender('[{...}]')
+window.qqRender = function(jsonString) {
+  try {
+    renderPlaces(JSON.parse(jsonString));
+  } catch (e) {
+    // Ignore malformed payloads — the location list still shows the data.
+  }
+};
 </script>
 </body>
 </html>

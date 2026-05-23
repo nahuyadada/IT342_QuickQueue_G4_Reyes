@@ -35,7 +35,14 @@ object AuthRepository {
                     ?: "Request successful"
                 val token = authPayload?.token ?: body?.token
 
-                AuthResult(success = true, message = message, token = token)
+                AuthResult(
+                    success = true,
+                    message = message,
+                    token = token,
+                    userId = authPayload?.id,
+                    name = authPayload?.name,
+                    email = authPayload?.email
+                )
             } else {
                 val errorMessage = parseErrorMessage(response.errorBody()?.string())
                 AuthResult(success = false, message = errorMessage)
@@ -74,10 +81,6 @@ object AuthRepository {
         } catch (_: Exception) {
             "Request failed"
         }
-    }
-
-    private fun String?.isNullOrBlank(): Boolean {
-        return this == null || this.isBlank()
     }
 
     private fun AuthApiResponse.toLegacyAuthResponse(): AuthResponse? {

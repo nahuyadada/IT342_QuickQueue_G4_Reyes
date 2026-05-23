@@ -12,7 +12,9 @@ data class OfficeDto(
     val address: String? = null,
     val phoneNumber: String? = null,
     val website: String? = null,
-    @SerializedName("isActive") val isActive: Boolean = false,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    @SerializedName(value = "active", alternate = ["isActive"]) val isActive: Boolean = false,
     val approvalStatus: String? = null,
     val businessHours: String? = null
 )
@@ -24,10 +26,12 @@ data class TicketDto(
     val ticketNumber: String = "",
     val status: String = "",
     val officeName: String? = null,
+    val officeType: String? = null,
     val peopleAhead: Int? = null,
     val estimatedWaitMinutes: Int? = null,
     val position: Int? = null,
-    val waitingCount: Int? = null
+    val waitingCount: Int? = null,
+    val createdAt: String? = null
 )
 
 // ── Generic API wrapper (the backend wraps some responses) ──

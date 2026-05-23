@@ -46,6 +46,18 @@ public class QueueController {
         }
     }
 
+    @GetMapping("/queues/my-tickets")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMyTickets(
+            @RequestParam Long userId) {
+        try {
+            List<Map<String, Object>> tickets = queueFacade.getUserTickets(userId);
+            return ResponseEntity.ok(ApiResponse.success(tickets));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("BUSINESS-001", e.getMessage()));
+        }
+    }
+
     @GetMapping("/queues/status/{ticketId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getQueueStatus(
             @PathVariable Long ticketId) {

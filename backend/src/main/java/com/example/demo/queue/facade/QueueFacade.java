@@ -120,6 +120,45 @@ public class QueueFacade {
     }
 
     /**
+     * Get every ticket a user has, newest first, enriched with office name and
+     * live queue position. Powers the mobile "My Tickets" screen.
+     */
+    public List<Map<String, Object>> getUserTickets(Long userId) {
+        return queueService.getTicketsForUser(userId).stream()
+                .map(ticket -> {
+                    ServiceOffice office = officeRepository.findById(ticket.getOfficeId()).orElse(null);
+
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("ticketId", ticket.getId());
+                    response.put("ticketNumber", ticket.getTicketNumber());
+                    response.put("status", ticket.getStatus().name());
+                    response.put("position", ticket.getPosition());
+                    response.put("officeName", office != null ? office.getName() : "Unknown office");
+                    response.put("officeType", office != null ? office.getType() : null);
+                    response.put("createdAt", ticket.getCreatedAt().toString());
+
+                    if (ticket.getStatus() == QueueTicket.TicketStatus.WAITING) {
+                        List<QueueTicket> waitingQueue = queueService.getWaitingTickets(ticket.getOfficeId());
+                        int peopleAhead = 0;
+                        for (QueueTicket t : waitingQueue) {
+                            if (t.getPosition() < ticket.getPosition()) {
+                                peopleAhead++;
+                            }
+                        }
+                        response.put("peopleAhead", peopleAhead);
+                        response.put("estimatedWaitMinutes", peopleAhead * 5);
+                    } else {
+                        // SERVING / COMPLETED / CANCELLED — nobody ahead.
+                        response.put("peopleAhead", 0);
+                        response.put("estimatedWaitMinutes", 0);
+                    }
+
+                    return response;
+                })
+                .toList();
+    }
+
+    /**
      * Cancel a queue ticket.
      */
     public Map<String, Object> cancelTicket(Long ticketId) {

@@ -15,6 +15,9 @@ public interface QueueTicketRepository extends JpaRepository<QueueTicket, Long> 
 
     Optional<QueueTicket> findByUserIdAndStatus(Long userId, QueueTicket.TicketStatus status);
 
+    /** All tickets ever created by a user, newest first (used by the mobile "My Tickets" screen). */
+    List<QueueTicket> findByUserIdOrderByCreatedAtDesc(Long userId);
+
     int countByOfficeIdAndStatus(Long officeId, QueueTicket.TicketStatus status);
 
     /** Count ALL tickets for an office created after a given time (used for daily sequence). */
