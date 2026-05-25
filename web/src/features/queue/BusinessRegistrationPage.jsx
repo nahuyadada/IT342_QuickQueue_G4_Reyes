@@ -14,6 +14,7 @@ const BUSINESS_CATEGORIES = [
   'Dental Clinic',
   'Hospital',
   'Pharmacy',
+  'Restaurant',
   'Utility Office',
   'Telecommunications',
   'Admissions Office',

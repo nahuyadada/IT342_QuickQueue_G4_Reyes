@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePartner } from '../../shared/UserPortalLayout';
-import { toggleOffice } from './queueService';
+import { toggleOffice, getOfficeStaff, addOfficeStaff, removeOfficeStaff } from './queueService';
 import './BusinessDashboardPage.css';
 
 export default function PartnerSettingsPage() {
@@ -15,6 +15,50 @@ export default function PartnerSettingsPage() {
   const [advanceBooking, setAdvanceBooking] = useState(false);
   const [smsNotifications, setSmsNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
+
+  // Staff management
+  const [staffList, setStaffList] = useState([]);
+  const [staffEmail, setStaffEmail] = useState('');
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [staffMsg, setStaffMsg] = useState({ type: '', text: '' });
+
+  const loadStaff = useCallback(async () => {
+    if (!office) return;
+    try {
+      const data = await getOfficeStaff(office.officeId);
+      setStaffList(Array.isArray(data) ? data : []);
+    } catch { /* ignore */ }
+  }, [office]);
+
+  useEffect(() => { loadStaff(); }, [loadStaff]);
+
+  const handleAddStaff = async (e) => {
+    e.preventDefault();
+    if (!staffEmail.trim()) return;
+    setStaffLoading(true);
+    setStaffMsg({ type: '', text: '' });
+    try {
+      await addOfficeStaff(office.officeId, staffEmail.trim());
+      setStaffEmail('');
+      setStaffMsg({ type: 'success', text: 'Staff member added successfully.' });
+      await loadStaff();
+    } catch (err) {
+      setStaffMsg({ type: 'error', text: err.message });
+    } finally {
+      setStaffLoading(false);
+    }
+  };
+
+  const handleRemoveStaff = async (staffId) => {
+    setStaffMsg({ type: '', text: '' });
+    try {
+      await removeOfficeStaff(office.officeId, staffId);
+      setStaffMsg({ type: 'success', text: 'Staff member removed.' });
+      await loadStaff();
+    } catch (err) {
+      setStaffMsg({ type: 'error', text: err.message });
+    }
+  };
 
   if (!office) return null;
 
@@ -153,6 +197,68 @@ export default function PartnerSettingsPage() {
             <span className="bdash-switch-slider" />
           </label>
         </div>
+      </div>
+
+      {/* Staff Management */}
+      <div className="bdash-card" style={{ marginBottom: '1rem' }}>
+        <h3>Staff Management</h3>
+        <p className="bdash-card-sub">
+          Add staff members by their registered email. Staff can open/close the queue,
+          call the next customer, and skip no-shows.
+        </p>
+
+        {staffMsg.text && (
+          <div className={`bdash-alert ${staffMsg.type === 'error' ? 'bdash-alert-error' : 'bdash-alert-success'}`}>
+            {staffMsg.text}
+          </div>
+        )}
+
+        <form className="bdash-staff-form" onSubmit={handleAddStaff}>
+          <input
+            className="bdash-staff-input"
+            type="email"
+            placeholder="Staff member email address"
+            value={staffEmail}
+            onChange={(e) => setStaffEmail(e.target.value)}
+            disabled={staffLoading}
+          />
+          <button
+            type="submit"
+            className="bdash-ctrl-btn bdash-ctrl-advance bdash-staff-add-btn"
+            disabled={staffLoading || !staffEmail.trim()}
+          >
+            {staffLoading ? 'Adding...' : '+ Add Staff'}
+          </button>
+        </form>
+
+        {staffList.length === 0 ? (
+          <div className="bdash-empty" style={{ padding: '1rem' }}>
+            <p>No staff members yet. Add someone using their email above.</p>
+          </div>
+        ) : (
+          <div className="bdash-staff-list">
+            {staffList.map((member) => (
+              <div key={member.id} className="bdash-staff-row">
+                <div className="bdash-staff-avatar">
+                  {(member.userName || member.userEmail || '?')[0].toUpperCase()}
+                </div>
+                <div className="bdash-staff-info">
+                  <strong>{member.userName || '—'}</strong>
+                  <small>{member.userEmail}</small>
+                </div>
+                <span className="bdash-staff-role">{member.role}</span>
+                <button
+                  type="button"
+                  className="bdash-staff-remove"
+                  onClick={() => handleRemoveStaff(member.id)}
+                  title="Remove staff member"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Queue Status Control */}

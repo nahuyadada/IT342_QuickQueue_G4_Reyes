@@ -1,11 +1,15 @@
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useMemo, useState, useEffect, createContext, useContext } from 'react';
-import { getMyRegistrations } from '../features/queue/queueService';
+import { getMyRegistrations, getStaffOffices } from '../features/queue/queueService';
 import './UserPortal.css';
 
 // Context to share approved office data with child pages
 export const PartnerContext = createContext(null);
 export const usePartner = () => useContext(PartnerContext);
+
+// Context for staff portal
+export const StaffContext = createContext(null);
+export const useStaff = () => useContext(StaffContext);
 
 export default function UserPortalLayout() {
   const navigate = useNavigate();
@@ -17,6 +21,10 @@ export default function UserPortalLayout() {
   const [partnerStatus, setPartnerStatus] = useState(isPartner ? 'loading' : 'customer');
   const [approvedOffice, setApprovedOffice] = useState(null);
   const [pendingRegistrations, setPendingRegistrations] = useState([]);
+
+  // Staff portal
+  const [staffOffice, setStaffOffice] = useState(null);
+  const [staffChecked, setStaffChecked] = useState(false);
 
   useEffect(() => {
     if (!isPartner) return;
@@ -73,6 +81,23 @@ export default function UserPortalLayout() {
 
     detectPartner();
   }, []); // only run once on mount
+
+  // Detect if this user is a staff member of any office
+  useEffect(() => {
+    if (isPartner) { setStaffChecked(true); return; }
+
+    const detectStaff = async () => {
+      try {
+        const offices = await getStaffOffices();
+        if (offices && offices.length > 0) {
+          setStaffOffice(offices[0]); // use first assigned office
+        }
+      } catch { /* stay in customer mode */ }
+      finally { setStaffChecked(true); }
+    };
+
+    detectStaff();
+  }, [isPartner]);
 
   const displayName = useMemo(() => user.name || 'User', [user.name]);
 
@@ -241,7 +266,53 @@ export default function UserPortalLayout() {
     );
   }
 
-  // STATE 4: Customer — normal view
+  // STATE 4: Staff portal — user is assigned as staff to a business
+  if (!isPartner && staffChecked && staffOffice) {
+    return (
+      <StaffContext.Provider value={staffOffice}>
+        <div className="portal-root">
+          <aside className="portal-sidebar">
+            <div className="portal-brand">
+              <span className="portal-brand-logo">Q</span>
+              <div>
+                <h2>QuickQueue</h2>
+                <p>Staff Portal</p>
+              </div>
+            </div>
+
+            <div className="portal-status-badge approved">🛎 {staffOffice.name}</div>
+
+            <nav className="portal-nav">
+              <NavLink to="/dashboard/staff-queue" className={({ isActive }) => `portal-nav-link ${isActive ? 'active' : ''}`}>
+                <span className="portal-nav-icon">🎫</span>
+                Queue Controls
+              </NavLink>
+              <NavLink to="/dashboard/profile" className={({ isActive }) => `portal-nav-link ${isActive ? 'active' : ''}`}>
+                <span className="portal-nav-icon">👤</span>
+                Profile
+              </NavLink>
+            </nav>
+
+            <button type="button" className="portal-logout" onClick={handleLogout}>
+              Logout
+            </button>
+          </aside>
+          <main className="portal-main">
+            <header className="portal-topbar">
+              <div>
+                <h1>{staffOffice.name}</h1>
+                <p>Staff access — {staffOffice.category || staffOffice.type} · {staffOffice.address}</p>
+              </div>
+              <div className="portal-user-chip">🛎 {displayName}</div>
+            </header>
+            <section className="portal-content"><Outlet /></section>
+          </main>
+        </div>
+      </StaffContext.Provider>
+    );
+  }
+
+  // STATE 5: Customer — normal view
   return (
     <div className="portal-root">
       <aside className="portal-sidebar">

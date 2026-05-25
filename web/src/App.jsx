@@ -29,6 +29,9 @@ import PartnerSettingsPage from './features/queue/PartnerSettingsPage';
 // Profile feature
 import ProfilePage from './features/profile/ProfilePage';
 
+// Staff feature
+import StaffQueuePage from './features/queue/StaffQueuePage';
+
 // Shared layout
 import UserPortalLayout from './shared/UserPortalLayout';
 
@@ -45,6 +48,8 @@ function DashboardRedirect() {
   if (partnerRole === 'partner') {
     return <Navigate to="/dashboard/register-business" replace />;
   }
+  // Staff users are detected asynchronously in UserPortalLayout;
+  // default to home and the layout will handle the redirect via nav.
   return <Navigate to="/dashboard/home" replace />;
 }
 
@@ -78,6 +83,9 @@ function App() {
           <Route path="business/:officeId" element={<BusinessDashboardPage />} />
           <Route path="branch/:officeId" element={<BranchDetailPage />} />
           <Route path="profile" element={<ProfilePage />} />
+
+          {/* Staff routes */}
+          <Route path="staff-queue" element={<StaffQueuePage />} />
 
           {/* Partner routes */}
           <Route path="register-business" element={<BusinessRegistrationPage />} />
