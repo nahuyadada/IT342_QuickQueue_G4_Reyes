@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getMyRegistrations } from './queueService';
+import { getMyRegistrations } from '../../shared/services/queueService';
 
 export default function PendingApplicationPage() {
   const [registrations, setRegistrations] = useState([]);

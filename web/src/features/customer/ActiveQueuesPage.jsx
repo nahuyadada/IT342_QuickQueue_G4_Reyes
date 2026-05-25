@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile } from '../auth/authService';
-import { cancelTicket, completeTicket, getQueueStatus } from './queueService';
+import { cancelTicket, completeTicket, getQueueStatus } from '../../shared/services/queueService';
 import './CustomerPortal.css';
 
 const POLL_INTERVAL = 5000; // Auto-refresh every 5 seconds

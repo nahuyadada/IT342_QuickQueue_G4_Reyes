@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// Landing page
+// Landing feature
 import LandingPage from './features/landing/LandingPage';
 
 // Auth feature
@@ -10,30 +10,32 @@ import AuthCallback from './features/auth/AuthCallback';
 // Admin feature
 import AdminDashboard from './features/admin/AdminDashboard';
 
-// Queue feature — Customer
-import HomePage from './features/queue/HomePage';
-import MapViewPage from './features/queue/MapViewPage';
-import ActiveQueuesPage from './features/queue/ActiveQueuesPage';
-import BusinessRegistrationPage from './features/queue/BusinessRegistrationPage';
-import MyRegistrationsPage from './features/queue/MyRegistrationsPage';
-import BusinessDashboardPage from './features/queue/BusinessDashboardPage';
-import BranchDetailPage from './features/queue/BranchDetailPage';
+// Customer feature
+import HomePage from './features/customer/HomePage';
+import MapViewPage from './features/customer/MapViewPage';
+import ActiveQueuesPage from './features/customer/ActiveQueuesPage';
+import MyRegistrationsPage from './features/customer/MyRegistrationsPage';
+import BranchDetailPage from './features/customer/BranchDetailPage';
 
-// Queue feature — Partner
-import PendingApplicationPage from './features/queue/PendingApplicationPage';
-import PartnerQueuePage from './features/queue/PartnerQueuePage';
-import PartnerCustomersPage from './features/queue/PartnerCustomersPage';
-import PartnerAnalyticsPage from './features/queue/PartnerAnalyticsPage';
-import PartnerSettingsPage from './features/queue/PartnerSettingsPage';
+// Business feature
+import BusinessRegistrationPage from './features/business/BusinessRegistrationPage';
+import BusinessDashboardPage from './features/business/BusinessDashboardPage';
+import PendingApplicationPage from './features/business/PendingApplicationPage';
+
+// Partner feature
+import PartnerQueuePage from './features/partner/PartnerQueuePage';
+import PartnerCustomersPage from './features/partner/PartnerCustomersPage';
+import PartnerAnalyticsPage from './features/partner/PartnerAnalyticsPage';
+import PartnerSettingsPage from './features/partner/PartnerSettingsPage';
+
+// Staff feature
+import StaffQueuePage from './features/staff/StaffQueuePage';
 
 // Profile feature
 import ProfilePage from './features/profile/ProfilePage';
 
-// Staff feature
-import StaffQueuePage from './features/queue/StaffQueuePage';
-
 // Shared layout
-import UserPortalLayout from './shared/UserPortalLayout';
+import UserPortalLayout from './shared/layout/UserPortalLayout';
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const token = localStorage.getItem('token');

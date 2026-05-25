@@ -1,4 +1,4 @@
-package com.example.quickqueue
+package com.example.quickqueue.queue
 
 import android.content.Context
 import androidx.work.CoroutineWorker

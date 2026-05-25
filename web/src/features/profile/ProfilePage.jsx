@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile, updateCurrentUserProfile, changePassword } from '../auth/authService';
-import { getMyTickets } from '../queue/queueService';
-import '../queue/CustomerPortal.css';
+import { getMyTickets } from '../../shared/services/queueService';
+import '../customer/CustomerPortal.css';
 
 /* ── Notification Utilities (shared with other pages via import) ── */
 const WEB_NOTIF_KEY = 'qq_notifications';

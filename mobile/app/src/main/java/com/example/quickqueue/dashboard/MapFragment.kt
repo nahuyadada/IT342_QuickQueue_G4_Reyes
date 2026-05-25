@@ -1,4 +1,5 @@
-package com.example.quickqueue
+package com.example.quickqueue.dashboard
+import com.example.quickqueue.R
 
 import android.annotation.SuppressLint
 import android.graphics.Color
@@ -14,8 +15,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.quickqueue.network.OfficeDto
-import com.example.quickqueue.network.QueueRepository
+import com.example.quickqueue.queue.OfficeDto
+import com.example.quickqueue.queue.QueueRepository
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject

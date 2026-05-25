@@ -1,4 +1,5 @@
-package com.example.quickqueue
+package com.example.quickqueue.profile
+import com.example.quickqueue.R
 
 import android.app.AlertDialog
 import android.os.Bundle
@@ -9,7 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.quickqueue.network.AuthRepository
+import com.example.quickqueue.auth.AuthRepository
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout

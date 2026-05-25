@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyRegistrations, getStaffOffices } from './queueService';
+import { getMyRegistrations, getStaffOffices } from '../../shared/services/queueService';
 import './MyRegistrationsPage.css';
 
 const STATUS_CONFIG = {

@@ -8,7 +8,7 @@
  *   POST /api/queues/advance/{officeId} — Advance queue (staff)
  *   GET  /api/offices — List offices
  */
-import apiClient from '../../shared/apiClient';
+import apiClient from './apiClient';
 
 export const joinQueue = async (userId, officeId) => {
   return apiClient.post(`/queues/join?userId=${userId}&officeId=${officeId}`);

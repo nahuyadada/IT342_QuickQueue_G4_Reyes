@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile } from '../auth/authService';
-import { cancelTicket, getOffices, getQueueStatus, joinQueue } from './queueService';
+import { cancelTicket, getOffices, getQueueStatus, joinQueue } from '../../shared/services/queueService';
 import './Dashboard.css';
 
 export default function Dashboard() {

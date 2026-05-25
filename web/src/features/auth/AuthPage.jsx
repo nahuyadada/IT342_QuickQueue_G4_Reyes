@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { login, register } from './authService';
-import { getMyRegistrations } from '../queue/queueService';
+import { getMyRegistrations } from '../../shared/services/queueService';
 import './AuthPage.css';
 
 /* ── SVG Icon Components ── */

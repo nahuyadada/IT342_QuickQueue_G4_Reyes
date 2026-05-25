@@ -1,4 +1,5 @@
-package com.example.quickqueue.network
+package com.example.quickqueue.queue
+import com.example.quickqueue.core.ApiClient
 
 import java.io.IOException
 import kotlinx.coroutines.CancellationException

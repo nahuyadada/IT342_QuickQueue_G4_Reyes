@@ -1,4 +1,5 @@
-package com.example.quickqueue
+package com.example.quickqueue.notifications
+import com.example.quickqueue.R
 
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -13,8 +14,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.quickqueue.network.NotificationStore
-import com.example.quickqueue.network.StoredNotification
+import com.example.quickqueue.notifications.NotificationStore
+import com.example.quickqueue.notifications.StoredNotification
 import com.google.android.material.card.MaterialCardView
 
 class NotificationsActivity : AppCompatActivity() {

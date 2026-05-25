@@ -1,4 +1,5 @@
-package com.example.quickqueue
+package com.example.quickqueue.queue
+import com.example.quickqueue.R
 
 import android.graphics.Color
 import android.os.Bundle
@@ -14,8 +15,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.quickqueue.network.QueueRepository
-import com.example.quickqueue.network.TicketDto
+import com.example.quickqueue.queue.QueueRepository
+import com.example.quickqueue.queue.TicketDto
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale

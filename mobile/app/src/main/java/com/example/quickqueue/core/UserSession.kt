@@ -1,4 +1,6 @@
-package com.example.quickqueue.network
+package com.example.quickqueue.core
+import com.example.quickqueue.queue.UserProfileDto
+import com.example.quickqueue.queue.QueueRepository
 
 import android.content.Context
 

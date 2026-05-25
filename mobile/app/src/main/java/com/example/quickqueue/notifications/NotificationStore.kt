@@ -1,4 +1,4 @@
-package com.example.quickqueue.network
+package com.example.quickqueue.notifications
 
 import android.content.Context
 import org.json.JSONArray

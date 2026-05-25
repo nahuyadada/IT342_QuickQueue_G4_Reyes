@@ -1,4 +1,4 @@
-package com.example.quickqueue.network
+package com.example.quickqueue.queue
 
 import retrofit2.Response
 import retrofit2.http.GET

@@ -1,4 +1,4 @@
-package com.example.quickqueue.network
+package com.example.quickqueue.auth
 
 data class RegisterRequest(
     val name: String,

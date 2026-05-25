@@ -1,12 +1,13 @@
-package com.example.quickqueue
+package com.example.quickqueue.queue
+import com.example.quickqueue.notifications.NotificationHelper
 
 import android.content.Context
-import com.example.quickqueue.network.ApiClient
-import com.example.quickqueue.network.NotificationStore
-import com.example.quickqueue.network.QueueRepository
-import com.example.quickqueue.network.StoredNotification
-import com.example.quickqueue.network.TicketSnapshot
-import com.example.quickqueue.network.UserSession
+import com.example.quickqueue.core.ApiClient
+import com.example.quickqueue.notifications.NotificationStore
+import com.example.quickqueue.queue.QueueRepository
+import com.example.quickqueue.notifications.StoredNotification
+import com.example.quickqueue.notifications.TicketSnapshot
+import com.example.quickqueue.core.UserSession
 
 /**
  * Polls the user's active tickets and fires local notifications when ticket

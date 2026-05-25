@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { registerOffice } from './queueService';
+import { registerOffice } from '../../shared/services/queueService';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './BusinessRegistrationPage.css';

@@ -4,7 +4,7 @@ import {
   getMyRegistrations, getStaffOffices,
   toggleOffice, advanceQueue,
   getOfficeStaff, addOfficeStaff, removeOfficeStaff
-} from './queueService';
+} from '../../shared/services/queueService';
 import './BusinessDashboardPage.css';
 
 /* ── Tab definitions ── */

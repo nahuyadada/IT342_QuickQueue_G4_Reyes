@@ -1,4 +1,5 @@
-package com.example.quickqueue
+package com.example.quickqueue.auth
+import com.example.quickqueue.R
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,7 +12,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
-import com.example.quickqueue.network.AuthRepository
+import com.example.quickqueue.auth.AuthRepository
 import kotlinx.coroutines.launch
 
 class Registration : AppCompatActivity() {

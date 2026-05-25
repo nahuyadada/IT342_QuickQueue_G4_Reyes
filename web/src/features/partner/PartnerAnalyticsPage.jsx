@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { usePartner } from '../../shared/UserPortalLayout';
-import './BusinessDashboardPage.css';
+import { usePartner } from '../../shared/layout/UserPortalLayout';
+import '../business/BusinessDashboardPage.css';
 
 export default function PartnerAnalyticsPage() {
   const office = usePartner();

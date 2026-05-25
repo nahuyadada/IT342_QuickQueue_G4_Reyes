@@ -1,4 +1,8 @@
-package com.example.quickqueue
+package com.example.quickqueue.profile
+import com.example.quickqueue.queue.QueueHistoryActivity
+import com.example.quickqueue.notifications.NotificationsActivity
+import com.example.quickqueue.dashboard.DashboardActivity
+import com.example.quickqueue.R
 
 import android.content.Intent
 import android.os.Bundle
@@ -9,7 +13,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.quickqueue.network.QueueRepository
+import com.example.quickqueue.queue.QueueRepository
 import kotlinx.coroutines.launch
 
 class ProfileFragment : Fragment() {

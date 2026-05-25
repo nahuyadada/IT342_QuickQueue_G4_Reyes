@@ -1,4 +1,5 @@
-package com.example.quickqueue.network
+package com.example.quickqueue.auth
+import com.example.quickqueue.queue.ApiDataResponse
 
 import retrofit2.Response
 import retrofit2.http.Body

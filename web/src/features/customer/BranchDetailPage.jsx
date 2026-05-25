@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { getCurrentUserProfile } from '../auth/authService';
-import { getOffices, getQueueCounts, joinQueue } from './queueService';
+import { getOffices, getQueueCounts, joinQueue } from '../../shared/services/queueService';
 import { addWebNotification } from '../profile/ProfilePage';
 import './CustomerPortal.css';
 import './BranchDetail.css';

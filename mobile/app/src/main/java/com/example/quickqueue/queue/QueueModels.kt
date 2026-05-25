@@ -1,4 +1,5 @@
-package com.example.quickqueue.network
+package com.example.quickqueue.queue
+import com.example.quickqueue.auth.ApiError
 
 import com.google.gson.annotations.SerializedName
 

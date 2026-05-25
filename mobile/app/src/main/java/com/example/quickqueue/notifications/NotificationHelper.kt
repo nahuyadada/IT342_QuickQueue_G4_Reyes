@@ -1,4 +1,6 @@
-package com.example.quickqueue
+package com.example.quickqueue.notifications
+import com.example.quickqueue.dashboard.DashboardActivity
+import com.example.quickqueue.R
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

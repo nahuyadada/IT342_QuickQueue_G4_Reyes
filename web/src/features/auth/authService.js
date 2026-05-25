@@ -5,7 +5,7 @@
  *         duplicated fetch options (method, headers, body, error parsing).
  * AFTER:  Uses apiClient which handles base URL, headers, and error parsing.
  */
-import apiClient from '../../shared/apiClient';
+import apiClient from '../../shared/services/apiClient';
 
 export const register = async (name, email, password) => {
   return apiClient.post('/auth/register', { name, email, password });

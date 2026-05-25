@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useMemo, useState, useEffect, createContext, useContext } from 'react';
-import { getMyRegistrations, getStaffOffices } from '../features/queue/queueService';
+import { getMyRegistrations, getStaffOffices } from '../services/queueService';
 import './UserPortal.css';
 
 // Context to share approved office data with child pages

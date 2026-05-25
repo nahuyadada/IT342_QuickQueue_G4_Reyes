@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile } from '../auth/authService';
-import { getOffices, joinQueue } from './queueService';
+import { getOffices, joinQueue } from '../../shared/services/queueService';
 import './CustomerPortal.css';
 
 /* ── Category helpers ── */

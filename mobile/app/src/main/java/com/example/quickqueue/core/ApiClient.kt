@@ -1,4 +1,6 @@
-package com.example.quickqueue.network
+package com.example.quickqueue.core
+import com.example.quickqueue.queue.QueueApiService
+import com.example.quickqueue.auth.AuthApiService
 
 import android.content.Context
 import com.example.quickqueue.BuildConfig

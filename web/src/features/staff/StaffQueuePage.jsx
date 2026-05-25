@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useStaff } from '../../shared/UserPortalLayout';
-import { toggleOffice, advanceQueue } from './queueService';
-import apiClient from '../../shared/apiClient';
-import './BusinessDashboardPage.css';
+import { useStaff } from '../../shared/layout/UserPortalLayout';
+import { toggleOffice, advanceQueue } from '../../shared/services/queueService';
+import apiClient from '../../shared/services/apiClient';
+import '../business/BusinessDashboardPage.css';
 
 export default function StaffQueuePage() {
   const office = useStaff();

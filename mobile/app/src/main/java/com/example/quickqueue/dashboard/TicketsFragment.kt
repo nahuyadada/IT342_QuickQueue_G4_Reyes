@@ -1,4 +1,5 @@
-package com.example.quickqueue
+package com.example.quickqueue.dashboard
+import com.example.quickqueue.R
 
 import android.graphics.Color
 import android.os.Bundle
@@ -13,9 +14,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.example.quickqueue.network.QueueRepository
-import com.example.quickqueue.network.TicketDto
-import com.example.quickqueue.network.UserSession
+import com.example.quickqueue.queue.QueueRepository
+import com.example.quickqueue.queue.TicketDto
+import com.example.quickqueue.core.UserSession
 import com.google.android.material.card.MaterialCardView
 import kotlinx.coroutines.launch
 

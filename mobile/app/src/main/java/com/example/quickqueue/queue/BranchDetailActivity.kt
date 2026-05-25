@@ -1,4 +1,5 @@
-package com.example.quickqueue
+package com.example.quickqueue.queue
+import com.example.quickqueue.R
 
 import android.content.Context
 import android.graphics.Color
@@ -14,10 +15,10 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import com.example.quickqueue.network.NotificationStore
-import com.example.quickqueue.network.QueueRepository
-import com.example.quickqueue.network.StoredNotification
-import com.example.quickqueue.network.UserSession
+import com.example.quickqueue.notifications.NotificationStore
+import com.example.quickqueue.queue.QueueRepository
+import com.example.quickqueue.notifications.StoredNotification
+import com.example.quickqueue.core.UserSession
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.google.android.material.textfield.TextInputEditText

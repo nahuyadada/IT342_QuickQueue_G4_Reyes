@@ -1,4 +1,10 @@
-package com.example.quickqueue
+package com.example.quickqueue.dashboard
+import com.example.quickqueue.queue.QueuePollingWorker
+import com.example.quickqueue.queue.QueueNotificationChecker
+import com.example.quickqueue.profile.ProfileFragment
+import com.example.quickqueue.notifications.NotificationHelper
+import com.example.quickqueue.auth.Login
+import com.example.quickqueue.R
 
 import android.Manifest
 import android.content.Intent
@@ -15,7 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.example.quickqueue.network.ApiClient
+import com.example.quickqueue.core.ApiClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit

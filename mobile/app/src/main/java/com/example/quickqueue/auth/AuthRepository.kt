@@ -1,4 +1,5 @@
-package com.example.quickqueue.network
+package com.example.quickqueue.auth
+import com.example.quickqueue.core.ApiClient
 
 import org.json.JSONObject
 import retrofit2.Response

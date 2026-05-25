@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { usePartner } from '../../shared/UserPortalLayout';
-import { toggleOffice, advanceQueue } from './queueService';
-import './BusinessDashboardPage.css';
+import { usePartner } from '../../shared/layout/UserPortalLayout';
+import { toggleOffice, advanceQueue } from '../../shared/services/queueService';
+import '../business/BusinessDashboardPage.css';
 
 export default function PartnerQueuePage() {
   const office = usePartner();

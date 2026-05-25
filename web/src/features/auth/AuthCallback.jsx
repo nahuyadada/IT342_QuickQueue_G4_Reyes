@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getMyRegistrations } from '../queue/queueService';
+import { getMyRegistrations } from '../../shared/services/queueService';
 
 export default function AuthCallback() {
   const [status, setStatus] = useState('Completing sign-in...');

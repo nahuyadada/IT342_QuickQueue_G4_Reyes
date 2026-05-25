@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile } from '../auth/authService';
-import { getOffices, getQueueCounts, joinQueue } from './queueService';
+import { getOffices, getQueueCounts, joinQueue } from '../../shared/services/queueService';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './MapViewPage.css';

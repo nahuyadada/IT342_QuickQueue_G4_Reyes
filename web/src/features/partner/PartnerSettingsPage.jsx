@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { usePartner } from '../../shared/UserPortalLayout';
-import { toggleOffice, getOfficeStaff, addOfficeStaff, removeOfficeStaff } from './queueService';
-import './BusinessDashboardPage.css';
+import { usePartner } from '../../shared/layout/UserPortalLayout';
+import { toggleOffice, getOfficeStaff, addOfficeStaff, removeOfficeStaff } from '../../shared/services/queueService';
+import '../business/BusinessDashboardPage.css';
 
 export default function PartnerSettingsPage() {
   const office = usePartner();
