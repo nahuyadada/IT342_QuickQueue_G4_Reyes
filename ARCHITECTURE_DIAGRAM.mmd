@@ -1,0 +1,164 @@
+%%{init: {"flowchart": {"curve": "step"}}}%%
+graph TB
+    subgraph Client["Client Layer"]
+        Browser["🌐 Web Browser<br/>React App"]
+    end
+
+    subgraph Frontend["Frontend Layer - React"]
+        Router["React Router<br/>SPA Navigation"]
+        Auth["Auth Module<br/>Login, OAuth, JWT"]
+        Landing["Landing Page"]
+
+        subgraph CustomerFeatures["Customer Features"]
+            Home["Home Page"]
+            MapView["Map View"]
+            ActiveQueues["Active Queues"]
+            MyRegs["My Registrations"]
+            BizDash["Business Dashboard"]
+            BranchDetail["Branch Detail"]
+        end
+
+        subgraph PartnerFeatures["Partner Features"]
+            RegBusiness["Register Business"]
+            Pending["Pending Applications"]
+            Queue["Queue Management"]
+            Customers["Customers List"]
+            Analytics["Analytics"]
+            Settings["Settings"]
+        end
+
+        subgraph AdminFeatures["Admin Features"]
+            AdminDash["Admin Dashboard"]
+        end
+
+        Profile["Profile Management<br/>Change Password, Notifications"]
+        StaffQueue["Staff Queue Page"]
+        Layout["User Portal Layout<br/>Nav & Context"]
+
+        LocalStorage["Local Storage<br/>Token, User Data"]
+    end
+
+    subgraph Backend["Backend Layer - Spring Boot"]
+        Controller["Controllers"]
+
+        subgraph Auth["Auth Module"]
+            AuthCtrl["AuthController"]
+            AuthSvc["AuthService"]
+            JwtService["JWT Service"]
+            UserDetailsService["UserDetailsService"]
+        end
+
+        subgraph Queue["Queue Module"]
+            QueueCtrl["QueueController"]
+            QueueFacade["QueueFacade<br/>Facade Pattern"]
+            QueueSvc["QueueService"]
+            QueueFactory["QueueTicketFactory"]
+            QueueObserver["QueueEventPublisher<br/>Observer Pattern"]
+        end
+
+        subgraph Office["Office Module"]
+            OfficeSvc["Office Service"]
+            OfficeRepo["ServiceOfficeRepository"]
+            StaffRepo["OfficeStaffRepository"]
+        end
+
+        subgraph Integration["Integration Module"]
+            IntegrationCtrl["IntegrationController"]
+            GoogleAdapter["GoogleOAuthAdapter"]
+            HolidayAdapter["PublicHolidayApiAdapter"]
+        end
+
+        subgraph Security["Security"]
+            SecurityConfig["SecurityConfig<br/>OAuth2, JWT"]
+            JwtFilter["JwtAuthenticationFilter"]
+            OAuth2Success["OAuth2SuccessHandler"]
+            OAuth2Failure["OAuth2FailureHandler"]
+        end
+
+        subgraph Models["Domain Models"]
+            User["User Entity"]
+            QueueTicket["QueueTicket Entity"]
+            ServiceOffice["ServiceOffice Entity"]
+            OfficeStaff["OfficeStaff Entity"]
+        end
+
+        subgraph Notifications["Event & Notifications"]
+            QueueEvent["QueueEvent"]
+            EmailListener["EmailNotificationListener"]
+            LogListener["LoggingNotificationListener"]
+        end
+    end
+
+    subgraph Database["Data Layer"]
+        PostgreSQL["PostgreSQL<br/>Supabase"]
+        Tables["Tables<br/>users, queue_tickets,<br/>service_offices, office_staff"]
+    end
+
+    subgraph External["External Services"]
+        GoogleOAuth["Google OAuth 2.0<br/>Authentication"]
+        HolidayAPI["Public Holiday API<br/>Holiday Data"]
+        Email["Email Service<br/>Notifications"]
+    end
+
+    subgraph Deployment["Deployment"]
+        Docker["Docker Container"]
+        Render["Render.com<br/>Cloud Platform"]
+        NixPacks["NixPacks<br/>Build Config"]
+    end
+
+    Browser -->|HTTP/HTTPS| Router
+    Router -->|Routes| Landing
+    Router -->|Routes| Auth
+    Router -->|Routes| CustomerFeatures
+    Router -->|Routes| PartnerFeatures
+    Router -->|Routes| AdminFeatures
+    Router -->|Routes| Profile
+    Router -->|Routes| StaffQueue
+
+    Auth -->|JWT Token| LocalStorage
+    Auth -->|Login/Register| AuthCtrl
+
+    CustomerFeatures -->|API Requests| Controller
+    PartnerFeatures -->|API Requests| Controller
+    AdminFeatures -->|API Requests| Controller
+    Profile -->|API Requests| Controller
+    StaffQueue -->|API Requests| Controller
+
+    AuthCtrl -->|Authenticate| AuthSvc
+    AuthSvc -->|Generate/Validate JWT| JwtService
+    AuthSvc -->|OAuth2 Flow| GoogleAdapter
+
+    QueueCtrl -->|Delegate| QueueFacade
+    QueueFacade -->|Create/Manage| QueueSvc
+    QueueFacade -->|Validate Office| OfficeRepo
+    QueueFacade -->|Publish Events| QueueObserver
+    QueueFacade -->|Create Tickets| QueueFactory
+
+    QueueSvc -->|CRUD| QueueTicket
+    QueueSvc -->|Query| QueueRepo["QueueTicketRepository"]
+
+    OfficeSvc -->|CRUD| OfficeRepo
+    OfficeSvc -->|Manage Staff| StaffRepo
+
+    QueueObserver -->|Notify| EmailListener
+    QueueObserver -->|Notify| LogListener
+
+    GoogleAdapter -->|Exchange Token| GoogleOAuth
+    HolidayAdapter -->|Fetch Holidays| HolidayAPI
+
+    EmailListener -->|Send| Email
+
+    AuthSvc -->|User Lookup| User
+    QueueFactory -->|Create| QueueTicket
+    QueueSvc -->|Query| ServiceOffice
+    StaffRepo -->|Manage| OfficeStaff
+
+    User -->|Stored in| PostgreSQL
+    QueueTicket -->|Stored in| PostgreSQL
+    ServiceOffice -->|Stored in| PostgreSQL
+    OfficeStaff -->|Stored in| PostgreSQL
+    PostgreSQL -->|Contains| Tables
+
+    Docker -->|Contains| Backend
+    Docker -->|Runs on| Render
+    NixPacks -->|Build config| Docker

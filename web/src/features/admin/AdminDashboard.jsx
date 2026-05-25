@@ -5,7 +5,7 @@ import {
   getOffices,
   getPendingOfficeRegistrations,
   rejectOfficeRegistration,
-} from '../queue/queueService';
+} from '../../shared/services/queueService';
 import './AdminDashboard.css';
 
 export default function AdminDashboard() {
