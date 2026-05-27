@@ -2,7 +2,9 @@ package com.example.demo.office.repository;
 
 import com.example.demo.office.model.OfficeStaff;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,4 +23,8 @@ public interface OfficeStaffRepository extends JpaRepository<OfficeStaff, Long> 
 
     /** Find specific staff record. */
     Optional<OfficeStaff> findByOfficeIdAndUserId(Long officeId, Long userId);
+
+    @Modifying
+    @Transactional
+    void deleteByOfficeId(Long officeId);
 }

@@ -47,6 +47,10 @@ public class QueueService {
                 userId, QueueTicket.TicketStatus.WAITING);
     }
 
+    public List<QueueTicket> getTicketsForUser(Long userId) {
+        return queueTicketRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    }
+
     public QueueTicket updateTicketStatus(QueueTicket ticket, QueueTicket.TicketStatus newStatus) {
         ticket.setStatus(newStatus);
         return queueTicketRepository.save(ticket);

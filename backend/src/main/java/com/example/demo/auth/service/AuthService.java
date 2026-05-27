@@ -203,6 +203,29 @@ public class AuthService {
         );
     }
 
+    public void changePassword(String authHeader, String oldPassword, String newPassword) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("Authorization header is missing or invalid");
+        }
+
+        String token = authHeader.substring(7);
+        String email = jwtService.extractUsername(token);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getAuthProvider() == User.AuthProvider.GOOGLE) {
+            throw new RuntimeException("Google accounts cannot change password here");
+        }
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Current password is incorrect");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+    }
+
     // ── Private Helpers ──────────────────────────────────────────────
 
     private User upsertGoogleUser(String email, String name) {

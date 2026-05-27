@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { login, register } from './authService';
+import { getMyRegistrations } from '../../shared/services/queueService';
 import './AuthPage.css';
 
 /* ── SVG Icon Components ── */
@@ -42,15 +43,6 @@ function UserIcon() {
   );
 }
 
-function ShieldIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M12 2L3 7V12C3 17.25 6.8 22.13 12 23C17.2 22.13 21 17.25 21 12V7L12 2Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
-      <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-}
-
 /* ── Splash Screen ── */
 function SplashScreen({ visible, fading }) {
   if (!visible) return null;
@@ -80,7 +72,14 @@ function SplashScreen({ visible, fading }) {
 /* ── Main Component ── */
 export default function AuthPage() {
   const navigate = useNavigate();
-  const [isSignup, setIsSignup] = useState(false);
+  const [searchParams] = useSearchParams();
+
+  // Read mode and role from URL params
+  const urlMode = searchParams.get('mode');
+  const urlRole = searchParams.get('role');
+
+  const [isSignup, setIsSignup] = useState(urlMode === 'register');
+  const [registerRole, setRegisterRole] = useState(urlRole === 'partner' ? 'partner' : 'customer');
 
   /* Splash state */
   const [showSplash, setShowSplash] = useState(true);
@@ -104,6 +103,14 @@ export default function AuthPage() {
     }
   }, []);
 
+  // Sync with URL params when they change
+  useEffect(() => {
+    if (urlMode === 'register') setIsSignup(true);
+    if (urlMode === 'login') setIsSignup(false);
+    if (urlRole === 'partner') setRegisterRole('partner');
+    if (urlRole === 'customer') setRegisterRole('customer');
+  }, [urlMode, urlRole]);
+
   // Login state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -124,9 +131,12 @@ export default function AuthPage() {
 
   const clearMessages = () => { setError(''); setSuccess(''); };
 
-  const persistAuth = (data) => {
+  const persistAuth = (data, partnerRole = null) => {
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify({ id: data.id, name: data.name, email: data.email, role: data.role }));
+    if (partnerRole) {
+      localStorage.setItem('partnerRole', partnerRole);
+    }
   };
 
   const handleLogin = async (e) => {
@@ -140,7 +150,30 @@ export default function AuthPage() {
     try {
       const data = await login(loginEmail, loginPassword);
       persistAuth(data);
-      navigate(data.role === 'ADMIN' ? '/admin/dashboard' : '/dashboard/home');
+
+      if (data.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+        return;
+      }
+
+      // Check if this user has existing office registrations (partner)
+      try {
+        const regs = await getMyRegistrations();
+        if (regs && regs.length > 0) {
+          localStorage.setItem('partnerRole', 'partner');
+          const approved = regs.find(r => r.approvalStatus === 'APPROVED');
+          if (approved) {
+            navigate('/dashboard/queue');
+          } else {
+            navigate('/dashboard/pending');
+          }
+          return;
+        }
+      } catch {
+        // Registration check failed — fall through to customer
+      }
+
+      navigate('/dashboard/home');
     } catch (err) {
       setError(err.message);
     } finally {
@@ -166,9 +199,15 @@ export default function AuthPage() {
     setLoading(true);
     try {
       const data = await register(signupName, signupEmail, signupPassword);
-      persistAuth(data);
+      persistAuth(data, registerRole);
       setSuccess('Account created successfully! Redirecting...');
-      setTimeout(() => navigate('/dashboard/home'), 1500);
+
+      // If partner role, redirect to business registration
+      if (registerRole === 'partner') {
+        setTimeout(() => navigate('/dashboard/register-business'), 1200);
+      } else {
+        setTimeout(() => navigate('/dashboard/home'), 1200);
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -212,6 +251,21 @@ export default function AuthPage() {
 
       {/* Auth Page */}
       <div className={`auth-root${showSplash ? ' auth-hidden' : ' auth-visible'}`}>
+        {/* Top bar with back to landing */}
+        <div className="auth-top-bar">
+          <a href="/" className="auth-back-brand" onClick={(e) => { e.preventDefault(); navigate('/'); }}>
+            <div className="auth-back-logo">
+              <svg width="22" height="22" viewBox="0 0 56 56" fill="none">
+                <rect width="56" height="56" rx="14" fill="white" fillOpacity="0.18" />
+                <path d="M14 18h28M14 28h21M14 38h14" stroke="white" strokeWidth="3.2" strokeLinecap="round" />
+                <circle cx="42" cy="35" r="9" fill="white" fillOpacity="0.92" />
+                <text x="42" y="39.5" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2563eb">Q</text>
+              </svg>
+            </div>
+            <span>QuickQueue</span>
+          </a>
+        </div>
+
         <div className="auth-page">
           <div className="auth-card">
             {/* Avatar icon */}
@@ -221,8 +275,8 @@ export default function AuthPage() {
 
             {/* Header */}
             <div className="auth-form-header">
-              <h2>{isSignup ? 'Create Account' : 'Login'}</h2>
-              <p>{isSignup ? 'Join QuickQueue today' : 'Access your QuickQueue dashboard'}</p>
+              <h2>{isSignup ? 'Create Account' : 'Welcome Back'}</h2>
+              <p>{isSignup ? 'Join QuickQueue today' : 'Sign in to your QuickQueue account'}</p>
             </div>
 
             {/* Messages */}
@@ -285,7 +339,6 @@ export default function AuthPage() {
                 </button>
 
                 {renderGoogleSignIn()}
-                {/* Security Notice */}
 
                 <p className="auth-switch">
                   Don't have an account?{' '}
@@ -299,6 +352,42 @@ export default function AuthPage() {
             {/* Sign Up Form */}
             {isSignup && (
               <form className="auth-form" onSubmit={handleSignup}>
+                {/* Role toggle */}
+                <div className="auth-role-toggle">
+                  <button
+                    type="button"
+                    className={`auth-role-btn ${registerRole === 'customer' ? 'active' : ''}`}
+                    onClick={() => setRegisterRole('customer')}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="8" r="4"/>
+                      <path d="M4 21C4 17.134 7.582 14 12 14C16.418 14 20 17.134 20 21"/>
+                    </svg>
+                    Customer
+                  </button>
+                  <button
+                    type="button"
+                    className={`auth-role-btn ${registerRole === 'partner' ? 'active' : ''}`}
+                    onClick={() => setRegisterRole('partner')}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="7" width="20" height="14" rx="2"/>
+                      <path d="M16 7V5a4 4 0 00-8 0v2"/>
+                    </svg>
+                    Partner
+                  </button>
+                </div>
+
+                {registerRole === 'partner' && (
+                  <div className="auth-role-info">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"/>
+                      <path d="M12 16v-4M12 8h.01"/>
+                    </svg>
+                    <span>Partner accounts require business registration and admin approval before going live.</span>
+                  </div>
+                )}
+
                 <div className="auth-field">
                   <label htmlFor="signup-name">Full Name</label>
                   <div className="auth-input-wrap">
@@ -370,7 +459,7 @@ export default function AuthPage() {
                   </div>
                 </div>
                 <button type="submit" className="auth-btn" disabled={loading}>
-                  {loading ? <span className="auth-spinner" /> : 'Create Account'}
+                  {loading ? <span className="auth-spinner" /> : (registerRole === 'partner' ? 'Create Partner Account' : 'Create Account')}
                 </button>
 
                 {renderGoogleSignIn()}
@@ -386,17 +475,17 @@ export default function AuthPage() {
           </div>
 
           </div>
-      </div>
 
-      {/* Footer - always at bottom */}
-      <footer className="auth-footer">
-        <p>&copy; 2025 QuickQueue. All rights reserved.</p>
-        <div className="auth-footer-links">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-          <a href="#">Support</a>
-        </div>
-      </footer>
+        {/* Footer - always at bottom */}
+        <footer className="auth-footer">
+          <p>&copy; 2025 QuickQueue. All rights reserved.</p>
+          <div className="auth-footer-links">
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+            <a href="#">Support</a>
+          </div>
+        </footer>
+      </div>
     </>
   );
 }

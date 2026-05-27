@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:allowBackup="true"
@@ -16,15 +17,40 @@
         android:theme="@style/Theme.QuickQueue"
         tools:targetApi="31" >
         <activity
-            android:name=".Registration"
+            android:name=".auth.Registration"
             android:exported="false" />
+        <activity
+            android:name=".profile.AccountSettingsActivity"
+            android:exported="false"
+            android:label="Account Settings"
+            android:parentActivityName=".dashboard.DashboardActivity" />
+        <activity
+            android:name=".notifications.NotificationsActivity"
+            android:exported="false"
+            android:label="Notifications"
+            android:parentActivityName=".dashboard.DashboardActivity" />
+        <activity
+            android:name=".queue.QueueHistoryActivity"
+            android:exported="false"
+            android:label="Queue History"
+            android:parentActivityName=".dashboard.DashboardActivity" />
+        <activity
+            android:name=".queue.BranchDetailActivity"
+            android:exported="false"
+            android:label="Branch Detail"
+            android:parentActivityName=".dashboard.DashboardActivity" />
+        <activity
+            android:name=".dashboard.DashboardActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.QuickQueue" />
         <activity
             android:name=".MainActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.QuickQueue" />
         <activity
-            android:name=".Login"
+            android:name=".auth.Login"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.QuickQueue" >

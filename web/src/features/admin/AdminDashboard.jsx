@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   approveOfficeRegistration,
+  deleteOffice,
+  getAdminOffices,
   getOffices,
   getPendingOfficeRegistrations,
   rejectOfficeRegistration,
-} from '../queue/queueService';
+} from '../../shared/services/queueService';
 import './AdminDashboard.css';
 
 export default function AdminDashboard() {
@@ -19,6 +21,8 @@ export default function AdminDashboard() {
   const [processingOfficeId, setProcessingOfficeId] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [deletingOfficeId, setDeletingOfficeId] = useState(null);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -32,12 +36,24 @@ export default function AdminDashboard() {
     setSuccess('');
   };
 
+  const normalizeOffice = (o) => ({
+    ...o,
+    officeId: o.officeId ?? o.id,
+    id: o.id ?? o.officeId,
+    isActive: o.isActive ?? o.active ?? false,
+  });
+
   const loadOffices = async () => {
     setLoadingOffices(true);
     setError('');
     try {
-      const officeList = await getOffices();
-      setOffices(officeList || []);
+      let officeList = [];
+      try {
+        officeList = await getAdminOffices();
+      } catch {
+        officeList = await getOffices();
+      }
+      setOffices((officeList || []).map(normalizeOffice));
     } catch (err) {
       setError(
         err.message === 'Failed to fetch'
@@ -82,6 +98,21 @@ export default function AdminDashboard() {
       setError(err.message || 'Unable to process registration request.');
     } finally {
       setProcessingOfficeId(null);
+    }
+  };
+
+  const handleDeleteOffice = async (officeId) => {
+    clearMessages();
+    setDeletingOfficeId(officeId);
+    try {
+      await deleteOffice(officeId);
+      setSuccess('Establishment deleted successfully.');
+      setConfirmDeleteId(null);
+      await loadOffices();
+    } catch (err) {
+      setError(err.message || 'Unable to delete establishment.');
+    } finally {
+      setDeletingOfficeId(null);
     }
   };
 
@@ -177,7 +208,7 @@ export default function AdminDashboard() {
         </div>
         <div className="admin-business-grid">
           {offices.slice(0, 6).map((office) => (
-            <div key={office.id} className="admin-business-card">
+            <div key={office.officeId} className="admin-business-card">
               <strong>{office.name}</strong>
               <span>{office.type}</span>
             </div>
@@ -192,6 +223,127 @@ export default function AdminDashboard() {
       </section>
     </>
   );
+
+  // Parses a doc field: returns { name, url } where url may be null for legacy data
+  const parseDoc = (value) => {
+    if (!value) return null;
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === 'object' && parsed.name) {
+        return { name: parsed.name, url: parsed.url || null };
+      }
+    } catch { /* legacy plain filename */ }
+    return { name: value, url: null };
+  };
+
+  const parsePhotos = (value) => {
+    if (!value) return [];
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed)) {
+        return parsed.map((p) => ({ name: p.name || 'photo', url: p.url || null }));
+      }
+    } catch { /* legacy comma-separated filenames */ }
+    return value.split(',').filter(Boolean).map((name) => ({ name, url: null }));
+  };
+
+  const openDataUrl = (url, name) => {
+    if (!url) return;
+    const win = window.open();
+    if (!win) return;
+    win.document.title = name || 'Document';
+    if (url.startsWith('data:application/pdf') || url.startsWith('data:image/')) {
+      win.document.body.style.margin = '0';
+      const tag = url.startsWith('data:image/') ? 'img' : 'iframe';
+      win.document.body.innerHTML = `<${tag} src="${url}" style="width:100vw;height:100vh;border:0;${tag === 'img' ? 'object-fit:contain;background:#111;' : ''}" />`;
+    } else {
+      const link = win.document.createElement('a');
+      link.href = url;
+      link.download = name || 'document';
+      win.document.body.appendChild(link);
+      link.click();
+    }
+  };
+
+  const renderDocuments = (request) => {
+    const docs = [
+      { label: 'Business Permit', doc: parseDoc(request.businessPermit) },
+      { label: 'DTI/SEC Registration', doc: parseDoc(request.dtiSecRegistration) },
+      { label: 'Utility Bill', doc: parseDoc(request.utilityBill) },
+      { label: 'Lease Agreement', doc: parseDoc(request.leaseAgreement) },
+      { label: 'Tax Document', doc: parseDoc(request.taxDocument) },
+    ];
+    const photos = parsePhotos(request.photos);
+    const hasAnyDoc = docs.some(d => d.doc) || photos.length > 0;
+
+    return (
+      <div className="admin-docs-section">
+        <div className="admin-docs-section-title">Submitted Documents</div>
+        <div className="admin-docs-grid">
+          {docs.map(({ label, doc }) => {
+            const clickable = !!(doc && doc.url);
+            return (
+              <div
+                key={label}
+                className={`admin-doc-item ${doc ? 'has-file' : 'no-file'} ${clickable ? 'admin-doc-clickable' : ''}`}
+                onClick={clickable ? () => openDataUrl(doc.url, doc.name) : undefined}
+                title={clickable ? 'Click to view' : ''}
+              >
+                <span className="admin-doc-icon">{doc ? '📄' : '—'}</span>
+                <div className="admin-doc-info">
+                  <span className="admin-doc-label">{label}</span>
+                  {doc && <span className="admin-doc-filename">{doc.name}</span>}
+                </div>
+                {clickable && <span className="admin-doc-view">View →</span>}
+              </div>
+            );
+          })}
+        </div>
+        {photos.length > 0 && (
+          <div>
+            <div className="admin-docs-section-title" style={{ marginBottom: '0.35rem' }}>
+              Photos ({photos.length})
+            </div>
+            <div className="admin-photos-row">
+              {photos.map((photo, i) => {
+                const clickable = !!photo.url;
+                return clickable ? (
+                  <button
+                    key={i}
+                    type="button"
+                    className="admin-photo-chip admin-photo-clickable"
+                    onClick={() => openDataUrl(photo.url, photo.name)}
+                    title="Click to view"
+                  >
+                    🖼 {photo.name}
+                  </button>
+                ) : (
+                  <span key={i} className="admin-photo-chip">🖼 {photo.name}</span>
+                );
+              })}
+            </div>
+            {photos.some(p => p.url) && (
+              <div className="admin-photo-thumbs">
+                {photos.filter(p => p.url).map((photo, i) => (
+                  <img
+                    key={i}
+                    src={photo.url}
+                    alt={photo.name}
+                    className="admin-photo-thumb"
+                    onClick={() => openDataUrl(photo.url, photo.name)}
+                    title="Click to view"
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {!hasAnyDoc && (
+          <p className="admin-empty" style={{ margin: 0 }}>No documents submitted.</p>
+        )}
+      </div>
+    );
+  };
 
   const renderApplications = () => (
     <>
@@ -227,11 +379,13 @@ export default function AdminDashboard() {
                   <small>Category: {request.category || '—'}</small>
                   <small>Phone: {request.phoneNumber || '—'}</small>
                   {request.website && <small>Web: {request.website}</small>}
+                  <small>Submitted: {new Date(request.createdAt).toLocaleDateString()}</small>
                 </div>
                 {request.additionalNotes && (
                   <p className="admin-request-notes">Note: {request.additionalNotes}</p>
                 )}
               </div>
+              {renderDocuments(request)}
               <div className="admin-request-actions">
                 <button
                   type="button"
@@ -294,11 +448,12 @@ export default function AdminDashboard() {
                     <th>Address</th>
                     <th>Category</th>
                     <th>Status</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {list.map((office) => (
-                    <tr key={office.id}>
+                    <tr key={office.officeId}>
                       <td><strong>{office.name}</strong></td>
                       <td>{office.address}</td>
                       <td>{office.category || '—'}</td>
@@ -306,6 +461,36 @@ export default function AdminDashboard() {
                         <span className={`admin-badge ${office.isActive ? 'badge-active' : 'badge-closed'}`}>
                           {office.isActive ? 'Open' : 'Closed'}
                         </span>
+                      </td>
+                      <td>
+                        {confirmDeleteId === office.officeId ? (
+                          <span className="admin-delete-confirm">
+                            <span className="admin-delete-confirm-label">Delete?</span>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-danger admin-btn-xs"
+                              onClick={() => handleDeleteOffice(office.officeId)}
+                              disabled={deletingOfficeId === office.officeId}
+                            >
+                              {deletingOfficeId === office.officeId ? '...' : 'Yes'}
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-btn admin-btn-xs"
+                              onClick={() => setConfirmDeleteId(null)}
+                            >
+                              No
+                            </button>
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="admin-btn admin-btn-xs admin-btn-ghost-danger"
+                            onClick={() => { setConfirmDeleteId(office.officeId); clearMessages(); }}
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -425,7 +610,10 @@ export default function AdminDashboard() {
       <aside className="admin-sidebar">
         <div className="admin-brand">
           <span className="admin-brand-logo">Q</span>
-          <span>QuickQueue</span>
+          <div className="admin-brand-text">
+            <h2>QuickQueue</h2>
+            <p>Admin Portal</p>
+          </div>
         </div>
 
         <nav className="admin-nav">
@@ -447,8 +635,11 @@ export default function AdminDashboard() {
 
       <main className="admin-main">
         <header className="admin-topbar">
-          <div className="admin-user">🛡️ {user.name || 'Admin User'}</div>
-          <span>{user.role || 'ADMIN'}</span>
+          <div>
+            <h1>Admin Dashboard</h1>
+            <p>Manage businesses and applications</p>
+          </div>
+          <div className="admin-user-chip">🛡️ {user.name || 'Admin User'}</div>
         </header>
 
         {error && <div className="admin-alert admin-alert-error">{error}</div>}
