@@ -35,4 +35,39 @@
     <string name="google_sign_in_success">Signed in with Google: %1$s</string>
     <string name="google_sign_in_failed">Google sign in failed. Please try again.</string>
     <string name="google_account_unknown_email">your account</string>
+
+    <!-- Dashboard strings -->
+    <string name="dash_brand">QuickQueue</string>
+    <string name="dash_welcome">Welcome, %1$s! 👋</string>
+    <string name="dash_logged_in_as">You are logged in as</string>
+    <string name="dash_select_office">Select Office</string>
+    <string name="dash_select_office_desc">Find your service office, then take a queue ticket.</string>
+    <string name="dash_search_office">Search office…</string>
+    <string name="dash_no_offices">No offices found</string>
+    <string name="dash_reload_offices">Reload Offices</string>
+    <string name="dash_take_ticket">Take Ticket</string>
+    <string name="dash_creating_ticket">Creating Ticket…</string>
+    <string name="dash_loading_offices">Loading…</string>
+    <string name="dash_my_ticket">My Ticket</string>
+    <string name="dash_my_ticket_desc">Monitor your queue status in real time.</string>
+    <string name="dash_no_ticket">No active ticket yet. Join a queue to view your live status.</string>
+    <string name="dash_ticket_number">Ticket Number</string>
+    <string name="dash_status">Status</string>
+    <string name="dash_office">Office</string>
+    <string name="dash_people_ahead">People Ahead</string>
+    <string name="dash_est_wait">Est. Wait</string>
+    <string name="dash_position">Position</string>
+    <string name="dash_refresh_status">Refresh Status</string>
+    <string name="dash_refreshing">Refreshing…</string>
+    <string name="dash_cancel_ticket">Cancel Ticket</string>
+    <string name="dash_cancelling">Cancelling…</string>
+    <string name="dash_min_suffix">min</string>
+    <string name="dash_placeholder">—</string>
+    <string name="dash_ticket_status_updated">Ticket status updated.</string>
+    <string name="dash_ticket_created">Ticket %1$s created successfully.</string>
+    <string name="dash_ticket_cancelled">Ticket %1$s has been cancelled.</string>
+    <string name="dash_already_has_ticket">You already have an active ticket. Cancel or finish it before joining a new queue.</string>
+    <string name="dash_select_office_first">Please select a service office first.</string>
+    <string name="dash_user_default">User</string>
+    <string name="dash_no_email">No email</string>
 </resources>

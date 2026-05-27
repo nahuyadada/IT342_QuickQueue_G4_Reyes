@@ -47,6 +47,7 @@ public class UserLoginStrategy implements AuthenticationStrategy {
         String token = jwtService.generateToken(userDetails);
 
         return AuthResponse.builder()
+                .id(user.getId())
                 .token(token)
                 .name(user.getName())
                 .email(user.getEmail())

@@ -23,7 +23,7 @@ public class ServiceOffice {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String address;
 
     @Column(nullable = false)
@@ -31,6 +31,12 @@ public class ServiceOffice {
 
     @Column
     private Long ownerUserId;
+
+    @Column
+    private Double latitude;
+
+    @Column
+    private Double longitude;
 
     // ── New registration fields ──
 
@@ -43,31 +49,31 @@ public class ServiceOffice {
     @Column
     private String website; // optional: website or social media page
 
-    @Column(length = 1000)
-    private String businessHours; // JSON or text format of hours
+    @Column(columnDefinition = "TEXT")
+    private String businessHours;
 
-    @Column(length = 2000)
-    private String photos; // comma-separated photo filenames or URLs
+    @Column(columnDefinition = "TEXT")
+    private String photos;
 
     // ── Verification documents ──
 
-    @Column
-    private String businessPermit; // filename of uploaded permit
+    @Column(columnDefinition = "TEXT")
+    private String businessPermit;
 
-    @Column
-    private String dtiSecRegistration; // DTI/SEC registration document
+    @Column(columnDefinition = "TEXT")
+    private String dtiSecRegistration;
 
-    @Column
-    private String utilityBill; // utility bill document
+    @Column(columnDefinition = "TEXT")
+    private String utilityBill;
 
-    @Column
-    private String leaseAgreement; // lease agreement document
+    @Column(columnDefinition = "TEXT")
+    private String leaseAgreement;
 
-    @Column
-    private String taxDocument; // tax document
+    @Column(columnDefinition = "TEXT")
+    private String taxDocument;
 
-    @Column(length = 1000)
-    private String additionalNotes; // optional notes from applicant
+    @Column(columnDefinition = "TEXT")
+    private String additionalNotes;
 
     // ── Status fields ──
 

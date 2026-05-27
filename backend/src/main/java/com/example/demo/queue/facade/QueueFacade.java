@@ -11,9 +11,11 @@ import com.example.demo.queue.factory.QueueTicketFactory;
 import com.example.demo.queue.model.QueueTicket;
 import com.example.demo.queue.observer.QueueEvent;
 import com.example.demo.queue.observer.QueueEventPublisher;
+import com.example.demo.queue.repository.QueueTicketRepository;
 import com.example.demo.queue.service.QueueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +46,7 @@ public class QueueFacade {
     private final QueueEventPublisher eventPublisher;
     private final OfficeStaffRepository officeStaffRepository;
     private final UserRepository userRepository;
+    private final QueueTicketRepository queueTicketRepository;
 
     /**
      * Join a queue: validate office → create ticket → save → notify → return status.
@@ -91,20 +94,71 @@ public class QueueFacade {
         ServiceOffice office = officeRepository.findById(ticket.getOfficeId())
                 .orElseThrow(() -> new RuntimeException("Office not found"));
 
-        int peopleAhead = 0;
-        if (ticket.getStatus() == QueueTicket.TicketStatus.WAITING) {
+        Map<String, Object> status = buildTicketResponse(ticket, office);
+
+        if (ticket.getStatus() == QueueTicket.TicketStatus.SERVING) {
+            // Currently being served — position 1, nobody ahead
+            status.put("position", 1);
+            status.put("peopleAhead", 0);
+            status.put("estimatedWaitMinutes", 0);
+        } else if (ticket.getStatus() == QueueTicket.TicketStatus.WAITING) {
+            // Dynamically count how many are actually ahead
             List<QueueTicket> waitingQueue = queueService.getWaitingTickets(ticket.getOfficeId());
+            int peopleAhead = 0;
             for (QueueTicket t : waitingQueue) {
                 if (t.getPosition() < ticket.getPosition()) {
                     peopleAhead++;
                 }
             }
+            status.put("position", peopleAhead + 1);
+            status.put("peopleAhead", peopleAhead);
+            status.put("estimatedWaitMinutes", peopleAhead * 5);
+        } else {
+            // COMPLETED or CANCELLED
+            status.put("peopleAhead", 0);
+            status.put("estimatedWaitMinutes", 0);
         }
 
-        Map<String, Object> status = buildTicketResponse(ticket, office);
-        status.put("peopleAhead", peopleAhead);
-        status.put("estimatedWaitMinutes", peopleAhead * 5); // ~5 min per person
         return status;
+    }
+
+    /**
+     * Get every ticket a user has, newest first, enriched with office name and
+     * live queue position. Powers the mobile "My Tickets" screen.
+     */
+    public List<Map<String, Object>> getUserTickets(Long userId) {
+        return queueService.getTicketsForUser(userId).stream()
+                .map(ticket -> {
+                    ServiceOffice office = officeRepository.findById(ticket.getOfficeId()).orElse(null);
+
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("ticketId", ticket.getId());
+                    response.put("ticketNumber", ticket.getTicketNumber());
+                    response.put("status", ticket.getStatus().name());
+                    response.put("position", ticket.getPosition());
+                    response.put("officeName", office != null ? office.getName() : "Unknown office");
+                    response.put("officeType", office != null ? office.getType() : null);
+                    response.put("createdAt", ticket.getCreatedAt().toString());
+
+                    if (ticket.getStatus() == QueueTicket.TicketStatus.WAITING) {
+                        List<QueueTicket> waitingQueue = queueService.getWaitingTickets(ticket.getOfficeId());
+                        int peopleAhead = 0;
+                        for (QueueTicket t : waitingQueue) {
+                            if (t.getPosition() < ticket.getPosition()) {
+                                peopleAhead++;
+                            }
+                        }
+                        response.put("peopleAhead", peopleAhead);
+                        response.put("estimatedWaitMinutes", peopleAhead * 5);
+                    } else {
+                        // SERVING / COMPLETED / CANCELLED — nobody ahead.
+                        response.put("peopleAhead", 0);
+                        response.put("estimatedWaitMinutes", 0);
+                    }
+
+                    return response;
+                })
+                .toList();
     }
 
     /**
@@ -173,6 +227,118 @@ public class QueueFacade {
     }
 
     /**
+     * Complete a queue ticket: mark as COMPLETED, publish event, then auto-advance
+     * to serve the next customer in line.
+     * Customer-initiated when their status is SERVING.
+     */
+    public Map<String, Object> completeTicket(Long ticketId) {
+        QueueTicket ticket = queueService.findTicketById(ticketId)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        if (ticket.getStatus() != QueueTicket.TicketStatus.SERVING) {
+            throw new RuntimeException("Only SERVING tickets can be completed");
+        }
+
+        ServiceOffice office = officeRepository.findById(ticket.getOfficeId())
+                .orElseThrow(() -> new RuntimeException("Office not found"));
+
+        // 1. Mark this ticket as COMPLETED
+        ticket.setCompletedAt(java.time.LocalDateTime.now());
+        ticket = queueService.updateTicketStatus(ticket, QueueTicket.TicketStatus.COMPLETED);
+
+        eventPublisher.publish(new QueueEvent(
+                QueueEvent.EventType.TICKET_COMPLETED,
+                ticket.getId(),
+                ticket.getUserId(),
+                ticket.getOfficeId(),
+                "Ticket " + ticket.getTicketNumber() + " completed at " + office.getName()
+        ));
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("ticketId", ticket.getId());
+        response.put("ticketNumber", ticket.getTicketNumber());
+        response.put("status", ticket.getStatus().name());
+
+        // 2. Auto-advance: serve the next waiting customer
+        try {
+            Map<String, Object> nextServing = advanceQueue(ticket.getOfficeId());
+            response.put("nextTicket", nextServing);
+        } catch (RuntimeException e) {
+            // No more waiting tickets — that's fine
+            response.put("nextTicket", null);
+        }
+
+        return response;
+    }
+
+    /**
+     * Get all active (WAITING + SERVING) tickets for a specific office.
+     */
+    public List<Map<String, Object>> getOfficeQueue(Long officeId) {
+        List<QueueTicket> serving = queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(officeId, QueueTicket.TicketStatus.SERVING);
+        List<QueueTicket> waiting = queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(officeId, QueueTicket.TicketStatus.WAITING);
+        List<QueueTicket> combined = new java.util.ArrayList<>();
+        combined.addAll(serving);
+        combined.addAll(waiting);
+        return combined.stream().map(ticket -> {
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("id", ticket.getId());
+            resp.put("ticketNumber", ticket.getTicketNumber());
+            resp.put("status", ticket.getStatus().name());
+            resp.put("position", ticket.getPosition());
+            resp.put("userId", ticket.getUserId());
+            resp.put("joinedAt", ticket.getCreatedAt().toString());
+            userRepository.findById(ticket.getUserId()).ifPresent(u -> resp.put("name", u.getName()));
+            return resp;
+        }).toList();
+    }
+
+    /**
+     * Daily stats for a partner office: servedToday and avgWaitMinutes.
+     */
+    public Map<String, Object> getOfficeStats(Long officeId) {
+        java.time.LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
+
+        // Served today = SERVING + COMPLETED tickets created today
+        int servedToday = queueTicketRepository.countByOfficeIdAndStatusInAndCreatedAtAfter(
+                officeId,
+                java.util.List.of(QueueTicket.TicketStatus.SERVING, QueueTicket.TicketStatus.COMPLETED),
+                startOfDay);
+
+        // Avg wait = avg(completedAt - createdAt) for today's completed tickets
+        List<QueueTicket> completed = queueTicketRepository.findByOfficeIdAndStatusAndCreatedAtAfter(
+                officeId, QueueTicket.TicketStatus.COMPLETED, startOfDay);
+
+        Double avgWaitMinutes = null;
+        if (!completed.isEmpty()) {
+            double totalMinutes = completed.stream()
+                    .filter(t -> t.getCompletedAt() != null)
+                    .mapToLong(t -> java.time.Duration.between(t.getCreatedAt(), t.getCompletedAt()).toMinutes())
+                    .average()
+                    .orElse(0);
+            if (totalMinutes > 0) avgWaitMinutes = totalMinutes;
+        }
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("servedToday", servedToday);
+        stats.put("avgWaitMinutes", avgWaitMinutes);
+        return stats;
+    }
+
+    /**
+     * Get the current waiting-queue count for every active office.
+     * Returns a map of officeId → waitingCount.
+     */
+    public Map<Long, Integer> getQueueCounts() {
+        List<ServiceOffice> activeOffices = officeRepository.findByIsActiveTrueAndApprovalStatus(ServiceOffice.ApprovalStatus.APPROVED);
+        Map<Long, Integer> counts = new HashMap<>();
+        for (ServiceOffice office : activeOffices) {
+            counts.put(office.getId(), queueService.getWaitingCount(office.getId()));
+        }
+        return counts;
+    }
+
+    /**
      * List all active service offices.
      */
     public List<ServiceOffice> getActiveOffices() {
@@ -224,6 +390,8 @@ public class QueueFacade {
                 .leaseAgreement(request.getLeaseAgreement() != null ? request.getLeaseAgreement().trim() : null)
                 .taxDocument(request.getTaxDocument() != null ? request.getTaxDocument().trim() : null)
                 .additionalNotes(request.getAdditionalNotes() != null ? request.getAdditionalNotes().trim() : null)
+                .latitude(request.getLatitude())
+                .longitude(request.getLongitude())
                 .ownerUserId(ownerUserId)
                 .isActive(false)
                 .approvalStatus(ServiceOffice.ApprovalStatus.PENDING)
@@ -402,6 +570,26 @@ public class QueueFacade {
         return officeStaffRepository.existsByOfficeIdAndUserId(office.getId(), userId);
     }
 
+    // ── Admin: All Approved Offices ──────────────────────────────────
+
+    public List<Map<String, Object>> getAllApprovedOfficesForAdmin() {
+        return officeRepository.findByApprovalStatusOrderByNameAsc(ServiceOffice.ApprovalStatus.APPROVED)
+                .stream()
+                .map(this::buildOfficeResponse)
+                .toList();
+    }
+
+    // ── Admin: Delete Office ─────────────────────────────────────────
+
+    @Transactional
+    public void deleteOffice(Long officeId) {
+        ServiceOffice office = officeRepository.findById(officeId)
+                .orElseThrow(() -> new RuntimeException("Office not found"));
+        queueTicketRepository.deleteByOfficeId(officeId);
+        officeStaffRepository.deleteByOfficeId(officeId);
+        officeRepository.delete(office);
+    }
+
     // ── Private Helpers ──────────────────────────────────────────────
 
     private Map<String, Object> buildOfficeResponse(ServiceOffice office) {
@@ -422,6 +610,8 @@ public class QueueFacade {
         response.put("taxDocument", office.getTaxDocument());
         response.put("additionalNotes", office.getAdditionalNotes());
         response.put("ownerUserId", office.getOwnerUserId());
+        response.put("latitude", office.getLatitude());
+        response.put("longitude", office.getLongitude());
         response.put("approvalStatus", office.getApprovalStatus().name());
         response.put("isActive", office.isActive());
         response.put("createdAt", office.getCreatedAt().toString());

@@ -1,6 +1,7 @@
 package com.example.demo.auth.controller;
 
 import com.example.demo.auth.dto.AuthResponse;
+import com.example.demo.auth.dto.ChangePasswordRequest;
 import com.example.demo.auth.dto.GoogleAuthRequest;
 import com.example.demo.auth.dto.LoginRequest;
 import com.example.demo.auth.dto.RegisterRequest;
@@ -121,6 +122,28 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ApiResponse.error("AUTH-001", e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/password")
+    public ResponseEntity<ApiResponse<?>> changePassword(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody ChangePasswordRequest request) {
+        try {
+            if (request.getOldPassword() == null || request.getOldPassword().isBlank()) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("VALID-001", "Current password is required"));
+            }
+            if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("VALID-001", "New password must be at least 6 characters"));
+            }
+
+            authService.changePassword(authHeader, request.getOldPassword(), request.getNewPassword());
+            return ResponseEntity.ok(ApiResponse.success(Map.of("message", "Password changed successfully")));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("AUTH-002", e.getMessage()));
         }
     }
 

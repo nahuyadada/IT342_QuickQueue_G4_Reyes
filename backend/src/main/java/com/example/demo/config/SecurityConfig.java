@@ -28,6 +28,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
 
@@ -55,8 +56,21 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
             .requestMatchers("/api/auth/**", "/oauth2/**", "/login/oauth2/**",
                             "/api/integration/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/offices").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/offices", "/api/offices/queue-counts").permitAll()
                         .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                    .authenticationEntryPoint((request, response, authException) -> {
+                        // Return 401 JSON for API calls instead of redirecting to OAuth2 login
+                        if (request.getRequestURI().startsWith("/api/")) {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write("{\"success\":false,\"error\":{\"code\":\"AUTH-001\",\"message\":\"Authentication required\"}}");
+                        } else {
+                            // For non-API requests, redirect to OAuth2 login as usual
+                            response.sendRedirect("/oauth2/authorization/google");
+                        }
+                    })
                 )
                 .sessionManagement(session -> session
             .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
