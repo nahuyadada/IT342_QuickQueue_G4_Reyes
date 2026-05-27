@@ -108,9 +108,11 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         List<String> origins = new ArrayList<>(List.of(
-                "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:3000"
+                "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:3000",
+                // Vercel deployment
+                "https://it-342-quick-queue-g4-reyes-web.vercel.app"
         ));
-        // Add the deployed frontend URL (set via FRONTEND_URL env var on Render)
+        // Also allow any URL set via FRONTEND_URL env var on Render
         if (frontendUrl != null && !frontendUrl.isBlank() && !origins.contains(frontendUrl)) {
             origins.add(frontendUrl);
         }
