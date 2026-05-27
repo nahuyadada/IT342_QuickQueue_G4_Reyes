@@ -306,12 +306,43 @@ export default function BusinessRegistrationPage() {
     );
   };
 
+  const fileToDataUrl = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (ev) => resolve(ev.target.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const encodeDoc = async (file) => {
+    if (!file) return null;
+    try {
+      const url = await fileToDataUrl(file);
+      return JSON.stringify({ name: file.name, url });
+    } catch {
+      return file.name;
+    }
+  };
+
+  const encodePhotos = () => {
+    if (!photoPreviews.length) return null;
+    return JSON.stringify(photoPreviews.map((p) => ({ name: p.name, url: p.src })));
+  };
+
   const handleSubmit = async () => {
     setError('');
     setSuccess('');
     setSubmitting(true);
 
     try {
+      const [permit, dti, utility, lease, tax] = await Promise.all([
+        encodeDoc(businessPermit),
+        encodeDoc(dtiSecRegistration),
+        encodeDoc(utilityBill),
+        encodeDoc(leaseAgreement),
+        encodeDoc(taxDocument),
+      ]);
+
       const data = {
         name: name.trim(),
         address: address.trim(),
@@ -320,12 +351,12 @@ export default function BusinessRegistrationPage() {
         phoneNumber: phoneNumber.trim(),
         website: website.trim() || null,
         businessHours: formatHoursForSubmit(),
-        photos: photoPreviews.map((p) => p.name).join(',') || null,
-        businessPermit: getFileName(businessPermit),
-        dtiSecRegistration: getFileName(dtiSecRegistration),
-        utilityBill: getFileName(utilityBill),
-        leaseAgreement: getFileName(leaseAgreement),
-        taxDocument: getFileName(taxDocument),
+        photos: encodePhotos(),
+        businessPermit: permit,
+        dtiSecRegistration: dti,
+        utilityBill: utility,
+        leaseAgreement: lease,
+        taxDocument: tax,
         additionalNotes: additionalNotes.trim() || null,
         latitude: latitude || null,
         longitude: longitude || null,

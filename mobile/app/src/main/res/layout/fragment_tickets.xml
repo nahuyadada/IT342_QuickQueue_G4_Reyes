@@ -88,6 +88,7 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/textEmptySubtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
@@ -95,6 +96,17 @@
                 android:text="Join a queue from the Home tab to start tracking your position."
                 android:textColor="#9CA3AF"
                 android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/btnRefresh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="Refresh"
+                android:textSize="14sp"
+                android:paddingHorizontal="28dp"
+                android:paddingVertical="10dp"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
         </LinearLayout>
     </LinearLayout>
 </ScrollView>

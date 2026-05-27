@@ -1,9 +1,10 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   getMyRegistrations, getStaffOffices,
   toggleOffice, advanceQueue,
-  getOfficeStaff, addOfficeStaff, removeOfficeStaff
+  getOfficeStaff, addOfficeStaff, removeOfficeStaff,
+  getOfficeQueue,
 } from '../../shared/services/queueService';
 import './BusinessDashboardPage.css';
 
@@ -39,8 +40,8 @@ export default function BusinessDashboardPage() {
 
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
 
-  // Queue data — populated from API when backend queue endpoints are connected
-  const [queueList] = useState([]);
+  const [queueList, setQueueList] = useState([]);
+  const queuePollRef = useRef(null);
 
   // Analytics data — populated from API when backend analytics endpoints are connected
   const analyticsData = useMemo(() => ({
@@ -93,9 +94,19 @@ export default function BusinessDashboardPage() {
     } catch { /* ignore */ }
   };
 
+  const loadQueue = async () => {
+    try {
+      const data = await getOfficeQueue(officeId);
+      setQueueList(Array.isArray(data) ? data : []);
+    } catch { /* ignore */ }
+  };
+
   useEffect(() => {
     loadOffice();
     loadStaff();
+    loadQueue();
+    queuePollRef.current = setInterval(loadQueue, 5000);
+    return () => clearInterval(queuePollRef.current);
   }, [officeId]);
 
   const handleToggle = async () => {
@@ -118,6 +129,7 @@ export default function BusinessDashboardPage() {
     try {
       const result = await advanceQueue(officeId);
       setActionMsg(`Now serving ticket ${result.ticketNumber}. ${result.waitingCount} still waiting.`);
+      await loadQueue();
     } catch (err) {
       setActionMsg(err.message || 'No waiting tickets.');
     } finally {

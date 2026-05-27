@@ -91,6 +91,18 @@ public class QueueController {
         }
     }
 
+    @GetMapping("/queues/office/{officeId}")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getOfficeQueue(
+            @PathVariable Long officeId) {
+        try {
+            List<Map<String, Object>> queue = queueFacade.getOfficeQueue(officeId);
+            return ResponseEntity.ok(ApiResponse.success(queue));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("BUSINESS-001", e.getMessage()));
+        }
+    }
+
     @PostMapping("/queues/complete/{ticketId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> completeTicket(
             @PathVariable Long ticketId) {
@@ -101,5 +113,12 @@ public class QueueController {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("BUSINESS-001", e.getMessage()));
         }
+    }
+
+    @GetMapping("/queues/office/{officeId}/stats")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getOfficeStats(
+            @PathVariable Long officeId) {
+        Map<String, Object> stats = queueFacade.getOfficeStats(officeId);
+        return ResponseEntity.ok(ApiResponse.success(stats));
     }
 }

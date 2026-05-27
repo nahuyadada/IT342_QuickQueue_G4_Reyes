@@ -41,6 +41,9 @@ public class QueueTicket {
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(nullable = true)
+    private LocalDateTime completedAt;
+
     public enum TicketStatus {
         WAITING, SERVING, COMPLETED, CANCELLED
     }

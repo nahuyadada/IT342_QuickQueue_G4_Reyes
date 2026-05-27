@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useMemo, useState, useEffect, createContext, useContext } from 'react';
 import { getMyRegistrations, getStaffOffices } from '../services/queueService';
+import NearbyAlert from '../../features/customer/NearbyAlert';
 import './UserPortal.css';
 
 // Context to share approved office data with child pages
@@ -315,6 +316,7 @@ export default function UserPortalLayout() {
   // STATE 5: Customer — normal view
   return (
     <div className="portal-root">
+      <NearbyAlert />
       <aside className="portal-sidebar">
         <div className="portal-brand">
           <span className="portal-brand-logo">Q</span>
