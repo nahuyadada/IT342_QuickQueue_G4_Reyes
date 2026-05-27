@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUserProfile } from '../auth/authService';
-import { cancelTicket, completeTicket, getQueueStatus } from '../../shared/services/queueService';
+import { cancelTicket, completeTicket, getQueueStatus, getMyTickets } from '../../shared/services/queueService';
 import './CustomerPortal.css';
 
 const POLL_INTERVAL = 5000; // Auto-refresh every 5 seconds
@@ -42,6 +42,24 @@ export default function ActiveQueuesPage() {
       if (activeTicketId) {
         await refreshQueueStatus(activeTicketId);
       } else {
+        // No cached ticket — look up active tickets from the server
+        try {
+          const user = JSON.parse(localStorage.getItem('user') || '{}');
+          const userId = user?.id;
+          if (userId) {
+            const tickets = await getMyTickets(userId);
+            const active = Array.isArray(tickets)
+              ? tickets.find(t => t.status === 'WAITING' || t.status === 'SERVING')
+              : null;
+            if (active) {
+              const id = String(active.ticketId);
+              localStorage.setItem('activeTicketId', id);
+              setActiveTicketId(id);
+              await refreshQueueStatus(id);
+              return;
+            }
+          }
+        } catch { /* stay empty */ }
         setLoading(false);
       }
     };

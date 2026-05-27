@@ -11,9 +11,11 @@ import com.example.demo.queue.factory.QueueTicketFactory;
 import com.example.demo.queue.model.QueueTicket;
 import com.example.demo.queue.observer.QueueEvent;
 import com.example.demo.queue.observer.QueueEventPublisher;
+import com.example.demo.queue.repository.QueueTicketRepository;
 import com.example.demo.queue.service.QueueService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.List;
@@ -44,6 +46,7 @@ public class QueueFacade {
     private final QueueEventPublisher eventPublisher;
     private final OfficeStaffRepository officeStaffRepository;
     private final UserRepository userRepository;
+    private final QueueTicketRepository queueTicketRepository;
 
     /**
      * Join a queue: validate office → create ticket → save → notify → return status.
@@ -240,6 +243,7 @@ public class QueueFacade {
                 .orElseThrow(() -> new RuntimeException("Office not found"));
 
         // 1. Mark this ticket as COMPLETED
+        ticket.setCompletedAt(java.time.LocalDateTime.now());
         ticket = queueService.updateTicketStatus(ticket, QueueTicket.TicketStatus.COMPLETED);
 
         eventPublisher.publish(new QueueEvent(
@@ -265,6 +269,60 @@ public class QueueFacade {
         }
 
         return response;
+    }
+
+    /**
+     * Get all active (WAITING + SERVING) tickets for a specific office.
+     */
+    public List<Map<String, Object>> getOfficeQueue(Long officeId) {
+        List<QueueTicket> serving = queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(officeId, QueueTicket.TicketStatus.SERVING);
+        List<QueueTicket> waiting = queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(officeId, QueueTicket.TicketStatus.WAITING);
+        List<QueueTicket> combined = new java.util.ArrayList<>();
+        combined.addAll(serving);
+        combined.addAll(waiting);
+        return combined.stream().map(ticket -> {
+            Map<String, Object> resp = new HashMap<>();
+            resp.put("id", ticket.getId());
+            resp.put("ticketNumber", ticket.getTicketNumber());
+            resp.put("status", ticket.getStatus().name());
+            resp.put("position", ticket.getPosition());
+            resp.put("userId", ticket.getUserId());
+            resp.put("joinedAt", ticket.getCreatedAt().toString());
+            userRepository.findById(ticket.getUserId()).ifPresent(u -> resp.put("name", u.getName()));
+            return resp;
+        }).toList();
+    }
+
+    /**
+     * Daily stats for a partner office: servedToday and avgWaitMinutes.
+     */
+    public Map<String, Object> getOfficeStats(Long officeId) {
+        java.time.LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
+
+        // Served today = SERVING + COMPLETED tickets created today
+        int servedToday = queueTicketRepository.countByOfficeIdAndStatusInAndCreatedAtAfter(
+                officeId,
+                java.util.List.of(QueueTicket.TicketStatus.SERVING, QueueTicket.TicketStatus.COMPLETED),
+                startOfDay);
+
+        // Avg wait = avg(completedAt - createdAt) for today's completed tickets
+        List<QueueTicket> completed = queueTicketRepository.findByOfficeIdAndStatusAndCreatedAtAfter(
+                officeId, QueueTicket.TicketStatus.COMPLETED, startOfDay);
+
+        Double avgWaitMinutes = null;
+        if (!completed.isEmpty()) {
+            double totalMinutes = completed.stream()
+                    .filter(t -> t.getCompletedAt() != null)
+                    .mapToLong(t -> java.time.Duration.between(t.getCreatedAt(), t.getCompletedAt()).toMinutes())
+                    .average()
+                    .orElse(0);
+            if (totalMinutes > 0) avgWaitMinutes = totalMinutes;
+        }
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("servedToday", servedToday);
+        stats.put("avgWaitMinutes", avgWaitMinutes);
+        return stats;
     }
 
     /**
@@ -510,6 +568,26 @@ public class QueueFacade {
     public boolean isOwnerOrStaff(ServiceOffice office, Long userId) {
         if (office.getOwnerUserId().equals(userId)) return true;
         return officeStaffRepository.existsByOfficeIdAndUserId(office.getId(), userId);
+    }
+
+    // ── Admin: All Approved Offices ──────────────────────────────────
+
+    public List<Map<String, Object>> getAllApprovedOfficesForAdmin() {
+        return officeRepository.findByApprovalStatusOrderByNameAsc(ServiceOffice.ApprovalStatus.APPROVED)
+                .stream()
+                .map(this::buildOfficeResponse)
+                .toList();
+    }
+
+    // ── Admin: Delete Office ─────────────────────────────────────────
+
+    @Transactional
+    public void deleteOffice(Long officeId) {
+        ServiceOffice office = officeRepository.findById(officeId)
+                .orElseThrow(() -> new RuntimeException("Office not found"));
+        queueTicketRepository.deleteByOfficeId(officeId);
+        officeStaffRepository.deleteByOfficeId(officeId);
+        officeRepository.delete(office);
     }
 
     // ── Private Helpers ──────────────────────────────────────────────

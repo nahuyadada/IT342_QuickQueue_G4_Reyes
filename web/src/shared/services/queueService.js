@@ -42,6 +42,18 @@ export const registerOffice = async (data) => {
   return apiClient.post('/offices/register', data);
 };
 
+export const getAdminOffices = async () => {
+  try {
+    return await apiClient.get('/admin/all-offices');
+  } catch (err) {
+    const msg = err.message || '';
+    if (msg.includes('404') || msg.includes('Not Found')) {
+      return apiClient.get('/admin/offices');
+    }
+    throw err;
+  }
+};
+
 export const getPendingOfficeRegistrations = async () => {
   return apiClient.get('/admin/offices/registrations/pending');
 };
@@ -52,6 +64,28 @@ export const approveOfficeRegistration = async (officeId) => {
 
 export const rejectOfficeRegistration = async (officeId) => {
   return apiClient.patch(`/admin/offices/registrations/${officeId}/reject`);
+};
+
+export const deleteOffice = async (officeId) => {
+  const attempts = [
+    () => apiClient.post('/admin/delete-office', { officeId }),
+    () => apiClient.patch(`/admin/offices/${officeId}/delete`),
+    () => apiClient.patch(`/admin/remove-office/${officeId}`),
+    () => apiClient.patch(`/offices/${officeId}/toggle`, { action: 'delete' }),
+  ];
+  let lastError;
+  for (const attempt of attempts) {
+    try {
+      return await attempt();
+    } catch (err) {
+      lastError = err;
+      const msg = err.message || '';
+      if (!msg.includes('404') && !msg.includes('Not Found')) {
+        throw err;
+      }
+    }
+  }
+  throw lastError;
 };
 
 export const getMyRegistrations = async () => {
@@ -86,4 +120,12 @@ export const getHolidays = async (country = 'PH', year = 2026) => {
 
 export const getMyTickets = async (userId) => {
   return apiClient.get(`/queues/my-tickets?userId=${userId}`);
+};
+
+export const getOfficeQueue = async (officeId) => {
+  return apiClient.get(`/queues/office/${officeId}`);
+};
+
+export const getOfficeStats = async (officeId) => {
+  return apiClient.get(`/queues/office/${officeId}/stats`);
 };

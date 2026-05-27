@@ -18,6 +18,8 @@ import com.example.quickqueue.queue.QueueRepository
 import com.example.quickqueue.queue.TicketDto
 import com.example.quickqueue.core.UserSession
 import com.google.android.material.card.MaterialCardView
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class TicketsFragment : Fragment() {
@@ -26,6 +28,10 @@ class TicketsFragment : Fragment() {
     private lateinit var emptyState: LinearLayout
     private lateinit var activeCountBanner: LinearLayout
     private lateinit var textActiveCount: TextView
+    private lateinit var textEmptySubtitle: TextView
+
+    private var pollJob: Job? = null
+    private val pollIntervalMs = 5_000L
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_tickets, container, false)
@@ -37,11 +43,40 @@ class TicketsFragment : Fragment() {
         emptyState = view.findViewById(R.id.emptyState)
         activeCountBanner = view.findViewById(R.id.activeCountBanner)
         textActiveCount = view.findViewById(R.id.textActiveCount)
-        loadTickets()
+        textEmptySubtitle = view.findViewById(R.id.textEmptySubtitle)
+        view.findViewById<android.widget.Button>(R.id.btnRefresh).setOnClickListener { startPolling(showSpinner = true) }
+        startPolling(showSpinner = true)
     }
 
-    private fun loadTickets() {
-        showLoading()
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) startPolling(showSpinner = true) else stopPolling()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        stopPolling()
+    }
+
+    private fun startPolling(showSpinner: Boolean = false) {
+        pollJob?.cancel()
+        pollJob = viewLifecycleOwner.lifecycleScope.launch {
+            var first = true
+            while (true) {
+                loadTickets(showSpinner = first && showSpinner)
+                first = false
+                delay(pollIntervalMs)
+            }
+        }
+    }
+
+    private fun stopPolling() {
+        pollJob?.cancel()
+        pollJob = null
+    }
+
+    private fun loadTickets(showSpinner: Boolean = false) {
+        if (showSpinner) showLoading()
         viewLifecycleOwner.lifecycleScope.launch {
             val userId = UserSession.resolveUserId(requireContext())
             if (!isAdded) return@launch
@@ -52,14 +87,19 @@ class TicketsFragment : Fragment() {
 
             QueueRepository.getMyTickets(userId)
                 .onSuccess { tickets ->
-                    // Only WAITING / SERVING tickets are "active" queues.
                     val active = tickets.filter {
                         it.status.equals("WAITING", true) || it.status.equals("SERVING", true)
                     }
-                    renderTickets(active)
+                    if (active.isEmpty() && tickets.isNotEmpty()) {
+                        // Has tickets but none are active — show diagnostic hint
+                        val recent = tickets.firstOrNull()
+                        showEmpty("Your last ticket (${recent?.ticketNumber ?: ""}) is ${recent?.status?.lowercase() ?: "done"}. Join a new queue to get started.")
+                    } else {
+                        renderTickets(active)
+                    }
                 }
                 .onFailure { error ->
-                    showEmpty(error.message ?: "Unable to load your tickets.")
+                    showEmpty("Could not load tickets: ${error.message ?: "Unknown error"}. Tap Refresh to try again.")
                 }
         }
     }
@@ -95,9 +135,8 @@ class TicketsFragment : Fragment() {
         ticketList.removeAllViews()
         activeCountBanner.visibility = View.GONE
         emptyState.visibility = View.VISIBLE
-        if (message != null) {
-            (emptyState.getChildAt(emptyState.childCount - 1) as? TextView)?.text = message
-        }
+        textEmptySubtitle.text = message
+            ?: "Join a queue from the Home tab to start tracking your position."
     }
 
     private fun createTicketCard(ticket: TicketDto): View {

@@ -139,10 +139,22 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            when {
+                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                        == PackageManager.PERMISSION_GRANTED -> { /* already granted */ }
+
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("Enable Notifications")
+                        .setMessage("QuickQueue needs notification permission to alert you when your turn is coming up.")
+                        .setPositiveButton("Allow") { _, _ ->
+                            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                        .setNegativeButton("Not now", null)
+                        .show()
+                }
+
+                else -> notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }

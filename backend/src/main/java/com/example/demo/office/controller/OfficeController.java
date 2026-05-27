@@ -65,15 +65,71 @@ public class OfficeController {
     @PatchMapping("/offices/{officeId}/toggle")
     public ResponseEntity<ApiResponse<Map<String, Object>>> toggleOffice(
             @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long officeId) {
+            @PathVariable Long officeId,
+            @RequestParam(required = false) String action,
+            @RequestBody(required = false) Map<String, Object> body) {
         try {
             Map<String, Object> profile = authService.getCurrentUserProfile(authHeader);
-            Long ownerUserId = ((Number) profile.get("id")).longValue();
-            Map<String, Object> office = queueFacade.toggleOfficeActive(officeId, ownerUserId);
+            Long userId = ((Number) profile.get("id")).longValue();
+            Object role = profile.get("role");
+            boolean isAdmin = role != null && "ADMIN".equalsIgnoreCase(String.valueOf(role));
+
+            String resolvedAction = resolveAction(action, body);
+            if (resolvedAction != null && "delete".equalsIgnoreCase(resolvedAction)) {
+                if (!isAdmin) {
+                    throw new RuntimeException("Admin access required");
+                }
+                queueFacade.deleteOffice(officeId);
+                Map<String, Object> resp = new java.util.HashMap<>();
+                resp.put("deleted", true);
+                resp.put("officeId", officeId);
+                return ResponseEntity.ok(ApiResponse.success(resp));
+            }
+
+            Map<String, Object> office = queueFacade.toggleOfficeActive(officeId, userId);
             return ResponseEntity.ok(ApiResponse.success(office));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("BUSINESS-001", e.getMessage()));
+        }
+    }
+
+    /** Admin delete via POST — unique path that registers reliably alongside /auth/admin/login. */
+    @PostMapping("/admin/delete-office")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteOfficePost(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody Map<String, Object> body) {
+        try {
+            ensureAdmin(authHeader);
+            Object rawId = body != null ? body.get("officeId") : null;
+            if (rawId == null) {
+                throw new RuntimeException("officeId is required");
+            }
+            Long officeId = ((Number) rawId).longValue();
+            queueFacade.deleteOffice(officeId);
+            Map<String, Object> resp = new java.util.HashMap<>();
+            resp.put("deleted", true);
+            resp.put("officeId", officeId);
+            return ResponseEntity.ok(ApiResponse.success(resp));
+        } catch (RuntimeException e) {
+            HttpStatus status = e.getMessage() != null && e.getMessage().contains("not found")
+                    ? HttpStatus.NOT_FOUND
+                    : HttpStatus.FORBIDDEN;
+            return ResponseEntity.status(status)
+                    .body(ApiResponse.error(status == HttpStatus.NOT_FOUND ? "BUSINESS-002" : "AUTH-003", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/admin/offices")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAdminOffices(
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            ensureAdmin(authHeader);
+            List<Map<String, Object>> offices = queueFacade.getAllApprovedOfficesForAdmin();
+            return ResponseEntity.ok(ApiResponse.success(offices));
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("AUTH-003", e.getMessage()));
         }
     }
 
@@ -104,6 +160,27 @@ public class OfficeController {
                     : HttpStatus.FORBIDDEN;
             return ResponseEntity.status(status)
                     .body(ApiResponse.error(status == HttpStatus.FORBIDDEN ? "AUTH-003" : "BUSINESS-001", e.getMessage()));
+        }
+    }
+
+    /** Admin delete — PATCH matches other admin routes (approve/reject) that register reliably. */
+    @PatchMapping("/admin/offices/{officeId}/delete")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteOfficeAdmin(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long officeId) {
+        try {
+            ensureAdmin(authHeader);
+            queueFacade.deleteOffice(officeId);
+            Map<String, Object> resp = new java.util.HashMap<>();
+            resp.put("deleted", true);
+            resp.put("officeId", officeId);
+            return ResponseEntity.ok(ApiResponse.success(resp));
+        } catch (RuntimeException e) {
+            HttpStatus status = e.getMessage() != null && e.getMessage().contains("not found")
+                    ? HttpStatus.NOT_FOUND
+                    : HttpStatus.FORBIDDEN;
+            return ResponseEntity.status(status)
+                    .body(ApiResponse.error(status == HttpStatus.NOT_FOUND ? "BUSINESS-002" : "AUTH-003", e.getMessage()));
         }
     }
 
@@ -197,5 +274,15 @@ public class OfficeController {
         if (role == null || !"ADMIN".equalsIgnoreCase(String.valueOf(role))) {
             throw new RuntimeException("Admin access required");
         }
+    }
+
+    private static String resolveAction(String action, Map<String, Object> body) {
+        if (action != null && !action.isBlank()) {
+            return action.trim();
+        }
+        if (body != null && body.get("action") != null) {
+            return String.valueOf(body.get("action")).trim();
+        }
+        return null;
     }
 }

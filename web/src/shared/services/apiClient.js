@@ -21,8 +21,12 @@ const parseResponse = async (res) => {
     if (data.error && data.error.message) {
       throw new Error(data.error.message);
     }
+    // Spring Boot default error format: { status, error: "Not Found", message?, path }
+    if (typeof data.error === 'string') {
+      throw new Error(`${data.error} (${res.status}) — ${data.path || res.url}`);
+    }
     // Fallback for legacy format
-    throw new Error(data.message || 'Request failed');
+    throw new Error(data.message || `Request failed (HTTP ${res.status})`);
   }
 
   // Return the data field if using SDD format, otherwise return raw

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePartner } from '../../shared/layout/UserPortalLayout';
-import { toggleOffice, advanceQueue } from '../../shared/services/queueService';
+import { toggleOffice, advanceQueue, getOfficeQueue, getOfficeStats } from '../../shared/services/queueService';
 import '../business/BusinessDashboardPage.css';
 
 export default function PartnerQueuePage() {
@@ -9,11 +9,30 @@ export default function PartnerQueuePage() {
   const [toggling, setToggling] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const [actionMsg, setActionMsg] = useState('');
+  const [queueList, setQueueList] = useState([]);
+  const [stats, setStats] = useState({ servedToday: 0, avgWaitMinutes: null });
+  const pollRef = useRef(null);
 
   useEffect(() => { setOfficeState(office); }, [office]);
 
-  // Queue data — populated from API when backend queue endpoints are connected
-  const [queueList] = useState([]);
+  useEffect(() => {
+    if (!officeState?.officeId) return;
+    const load = async () => {
+      try {
+        const [data, s] = await Promise.all([
+          getOfficeQueue(officeState.officeId),
+          getOfficeStats(officeState.officeId),
+        ]);
+        setQueueList(Array.isArray(data) ? data : []);
+        if (s) setStats(s);
+      } catch (err) {
+        console.error('Failed to load office queue:', err);
+      }
+    };
+    load();
+    pollRef.current = setInterval(load, 5000);
+    return () => clearInterval(pollRef.current);
+  }, [officeState?.officeId]);
 
   if (!officeState) return null;
 
@@ -37,6 +56,8 @@ export default function PartnerQueuePage() {
     try {
       const result = await advanceQueue(officeState.officeId);
       setActionMsg(`Now serving ticket ${result.ticketNumber}. ${result.waitingCount} still waiting.`);
+      const data = await getOfficeQueue(officeState.officeId);
+      setQueueList(Array.isArray(data) ? data : []);
     } catch (err) { setActionMsg(err.message); }
     finally { setAdvancing(false); }
   };
@@ -68,11 +89,13 @@ export default function PartnerQueuePage() {
           <span className="bdash-qstat-label">Now Serving</span>
         </div>
         <div className="bdash-qstat">
-          <span className="bdash-qstat-value">0</span>
+          <span className="bdash-qstat-value">{stats.servedToday}</span>
           <span className="bdash-qstat-label">Served Today</span>
         </div>
         <div className="bdash-qstat">
-          <span className="bdash-qstat-value">—</span>
+          <span className="bdash-qstat-value">
+            {stats.avgWaitMinutes != null ? `${Math.round(stats.avgWaitMinutes)}m` : '—'}
+          </span>
           <span className="bdash-qstat-label">Avg Wait</span>
         </div>
       </div>
@@ -124,7 +147,7 @@ export default function PartnerQueuePage() {
             <div className="bdash-empty"><span>🎉</span><p>No customers waiting!</p></div>
           ) : (
             <div className="bdash-queue-items">
-              {waitingList.slice(0, 5).map((q, idx) => (
+              {waitingList.map((q, idx) => (
                 <div key={q.id} className="bdash-queue-item">
                   <div className="bdash-queue-pos">{idx + 1}</div>
                   <div className="bdash-queue-info">
