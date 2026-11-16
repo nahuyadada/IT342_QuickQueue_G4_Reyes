@@ -24,11 +24,11 @@ public class OAuth2AuthenticationFailureHandler implements AuthenticationFailure
         String message = exception.getMessage() == null ? "oauth2_login_failed" : exception.getMessage();
 
         if (message.toLowerCase().contains("access_denied")) {
-            response.sendRedirect(frontendUrl + "/");
+            response.sendRedirect(frontendUrl.strip() + "/");
             return;
         }
 
-        response.sendRedirect(frontendUrl + "/auth/callback?error="
+        response.sendRedirect(frontendUrl.strip() + "/auth/callback?error="
                 + URLEncoder.encode(message, StandardCharsets.UTF_8));
     }
 }

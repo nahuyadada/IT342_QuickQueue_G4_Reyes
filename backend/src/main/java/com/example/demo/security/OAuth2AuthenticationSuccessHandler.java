@@ -34,7 +34,7 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
         Object principal = authentication.getPrincipal();
 
         if (!(principal instanceof OAuth2User oAuth2User)) {
-            response.sendRedirect(frontendUrl + "/auth/callback?error=oauth2_principal_invalid");
+            response.sendRedirect(frontendUrl.strip() + "/auth/callback?error=oauth2_principal_invalid");
             return;
         }
 
@@ -46,14 +46,14 @@ public class OAuth2AuthenticationSuccessHandler implements AuthenticationSuccess
             String encodedEmail = URLEncoder.encode(authResponse.getEmail(), StandardCharsets.UTF_8);
             String encodedRole = URLEncoder.encode(authResponse.getRole(), StandardCharsets.UTF_8);
 
-            response.sendRedirect(frontendUrl + "/auth/callback?id=" + encodedId
+            response.sendRedirect(frontendUrl.strip() + "/auth/callback?id=" + encodedId
                     + "&token=" + encodedToken
                     + "&name=" + encodedName
                     + "&email=" + encodedEmail
                     + "&role=" + encodedRole);
         } catch (IllegalArgumentException ex) {
             String encodedMessage = URLEncoder.encode(ex.getMessage(), StandardCharsets.UTF_8);
-            response.sendRedirect(frontendUrl + "/auth/callback?error=" + encodedMessage);
+            response.sendRedirect(frontendUrl.strip() + "/auth/callback?error=" + encodedMessage);
         }
     }
 }

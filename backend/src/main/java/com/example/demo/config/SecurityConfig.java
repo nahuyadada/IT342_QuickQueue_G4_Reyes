@@ -127,8 +127,8 @@ public class SecurityConfig {
                 "https://it-342-quick-queue-g4-reyes-web.vercel.app"
         ));
         // Also allow any URL set via FRONTEND_URL env var on Render
-        if (frontendUrl != null && !frontendUrl.isBlank() && !origins.contains(frontendUrl)) {
-            origins.add(frontendUrl);
+        if (frontendUrl != null && !frontendUrl.isBlank() && !origins.contains(frontendUrl.strip())) {
+            origins.add(frontendUrl.strip());
         }
         config.setAllowedOrigins(origins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
