@@ -114,7 +114,7 @@ export const getStaffOffices = async () => {
   return apiClient.get('/offices/staff-offices');
 };
 
-export const getHolidays = async (country = 'PH', year = 2026) => {
+export const getHolidays = async (country = 'PH', year = new Date().getFullYear()) => {
   return apiClient.get(`/integration/holidays?country=${country}&year=${year}`);
 };
 

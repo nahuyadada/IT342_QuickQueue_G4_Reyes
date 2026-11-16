@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +34,10 @@ public class QueueController {
     @PostMapping("/queues/join")
     public ResponseEntity<ApiResponse<Map<String, Object>>> joinQueue(
             @RequestParam Long userId,
-            @RequestParam Long officeId) {
+            @RequestParam Long officeId,
+            Principal principal) {
         try {
+            queueFacade.requireSelf(userId, actorId(principal));
             Map<String, Object> result = queueFacade.joinQueue(userId, officeId);
             return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(result));
         } catch (RuntimeException e) {
@@ -45,8 +48,10 @@ public class QueueController {
 
     @GetMapping("/queues/my-tickets")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMyTickets(
-            @RequestParam Long userId) {
+            @RequestParam Long userId,
+            Principal principal) {
         try {
+            queueFacade.requireSelf(userId, actorId(principal));
             List<Map<String, Object>> tickets = queueFacade.getUserTickets(userId);
             return ResponseEntity.ok(ApiResponse.success(tickets));
         } catch (RuntimeException e) {
@@ -69,9 +74,10 @@ public class QueueController {
 
     @PatchMapping("/queues/tickets/{ticketId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> cancelTicket(
-            @PathVariable Long ticketId) {
+            @PathVariable Long ticketId,
+            Principal principal) {
         try {
-            Map<String, Object> result = queueFacade.cancelTicket(ticketId);
+            Map<String, Object> result = queueFacade.cancelTicket(ticketId, actorId(principal));
             return ResponseEntity.ok(ApiResponse.success(result));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -81,9 +87,10 @@ public class QueueController {
 
     @PostMapping("/queues/advance/{officeId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> advanceQueue(
-            @PathVariable Long officeId) {
+            @PathVariable Long officeId,
+            Principal principal) {
         try {
-            Map<String, Object> result = queueFacade.advanceQueue(officeId);
+            Map<String, Object> result = queueFacade.advanceQueue(officeId, actorId(principal));
             return ResponseEntity.ok(ApiResponse.success(result));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -93,9 +100,10 @@ public class QueueController {
 
     @GetMapping("/queues/office/{officeId}")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getOfficeQueue(
-            @PathVariable Long officeId) {
+            @PathVariable Long officeId,
+            Principal principal) {
         try {
-            List<Map<String, Object>> queue = queueFacade.getOfficeQueue(officeId);
+            List<Map<String, Object>> queue = queueFacade.getOfficeQueue(officeId, actorId(principal));
             return ResponseEntity.ok(ApiResponse.success(queue));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -105,9 +113,10 @@ public class QueueController {
 
     @PostMapping("/queues/complete/{ticketId}")
     public ResponseEntity<ApiResponse<Map<String, Object>>> completeTicket(
-            @PathVariable Long ticketId) {
+            @PathVariable Long ticketId,
+            Principal principal) {
         try {
-            Map<String, Object> result = queueFacade.completeTicket(ticketId);
+            Map<String, Object> result = queueFacade.completeTicket(ticketId, actorId(principal));
             return ResponseEntity.ok(ApiResponse.success(result));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()
@@ -117,8 +126,18 @@ public class QueueController {
 
     @GetMapping("/queues/office/{officeId}/stats")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getOfficeStats(
-            @PathVariable Long officeId) {
-        Map<String, Object> stats = queueFacade.getOfficeStats(officeId);
-        return ResponseEntity.ok(ApiResponse.success(stats));
+            @PathVariable Long officeId,
+            Principal principal) {
+        try {
+            Map<String, Object> stats = queueFacade.getOfficeStats(officeId, actorId(principal));
+            return ResponseEntity.ok(ApiResponse.success(stats));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("BUSINESS-001", e.getMessage()));
+        }
+    }
+
+    private Long actorId(Principal principal) {
+        return queueFacade.resolveUserId(principal.getName());
     }
 }

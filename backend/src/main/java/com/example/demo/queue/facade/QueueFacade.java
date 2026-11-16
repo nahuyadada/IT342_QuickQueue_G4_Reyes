@@ -164,9 +164,11 @@ public class QueueFacade {
     /**
      * Cancel a queue ticket.
      */
-    public Map<String, Object> cancelTicket(Long ticketId) {
+    public Map<String, Object> cancelTicket(Long ticketId, Long actorId) {
         QueueTicket ticket = queueService.findTicketById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        requireTicketAccess(ticket, actorId);
 
         if (ticket.getStatus() != QueueTicket.TicketStatus.WAITING) {
             throw new RuntimeException("Only WAITING tickets can be cancelled");
@@ -193,9 +195,33 @@ public class QueueFacade {
      * Advance the queue: mark the current ticket as SERVING, notify the next person.
      * Staff-only operation.
      */
-    public Map<String, Object> advanceQueue(Long officeId) {
+    public Map<String, Object> advanceQueue(Long officeId, Long actorId) {
         ServiceOffice office = officeRepository.findById(officeId)
                 .orElseThrow(() -> new RuntimeException("Service office not found"));
+        requireOfficeAccess(office, actorId);
+        return advanceQueue(office);
+    }
+
+    private Map<String, Object> advanceQueue(ServiceOffice office) {
+        Long officeId = office.getId();
+
+        if (queueService.getWaitingCount(officeId) == 0) {
+            throw new RuntimeException("No waiting tickets in this queue");
+        }
+
+        // Calling the next customer finishes whoever was being served
+        for (QueueTicket current : queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(
+                officeId, QueueTicket.TicketStatus.SERVING)) {
+            current.setCompletedAt(java.time.LocalDateTime.now());
+            queueService.updateTicketStatus(current, QueueTicket.TicketStatus.COMPLETED);
+            eventPublisher.publish(new QueueEvent(
+                    QueueEvent.EventType.TICKET_COMPLETED,
+                    current.getId(),
+                    current.getUserId(),
+                    officeId,
+                    "Ticket " + current.getTicketNumber() + " completed at " + office.getName()
+            ));
+        }
 
         QueueTicket nextTicket = queueService.getNextWaitingTicket(officeId)
                 .orElseThrow(() -> new RuntimeException("No waiting tickets in this queue"));
@@ -231,9 +257,11 @@ public class QueueFacade {
      * to serve the next customer in line.
      * Customer-initiated when their status is SERVING.
      */
-    public Map<String, Object> completeTicket(Long ticketId) {
+    public Map<String, Object> completeTicket(Long ticketId, Long actorId) {
         QueueTicket ticket = queueService.findTicketById(ticketId)
                 .orElseThrow(() -> new RuntimeException("Ticket not found"));
+
+        requireTicketAccess(ticket, actorId);
 
         if (ticket.getStatus() != QueueTicket.TicketStatus.SERVING) {
             throw new RuntimeException("Only SERVING tickets can be completed");
@@ -261,7 +289,7 @@ public class QueueFacade {
 
         // 2. Auto-advance: serve the next waiting customer
         try {
-            Map<String, Object> nextServing = advanceQueue(ticket.getOfficeId());
+            Map<String, Object> nextServing = advanceQueue(office);
             response.put("nextTicket", nextServing);
         } catch (RuntimeException e) {
             // No more waiting tickets — that's fine
@@ -274,7 +302,8 @@ public class QueueFacade {
     /**
      * Get all active (WAITING + SERVING) tickets for a specific office.
      */
-    public List<Map<String, Object>> getOfficeQueue(Long officeId) {
+    public List<Map<String, Object>> getOfficeQueue(Long officeId, Long actorId) {
+        requireOfficeAccess(officeId, actorId);
         List<QueueTicket> serving = queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(officeId, QueueTicket.TicketStatus.SERVING);
         List<QueueTicket> waiting = queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(officeId, QueueTicket.TicketStatus.WAITING);
         List<QueueTicket> combined = new java.util.ArrayList<>();
@@ -296,7 +325,8 @@ public class QueueFacade {
     /**
      * Daily stats for a partner office: servedToday and avgWaitMinutes.
      */
-    public Map<String, Object> getOfficeStats(Long officeId) {
+    public Map<String, Object> getOfficeStats(Long officeId, Long actorId) {
+        requireOfficeAccess(officeId, actorId);
         java.time.LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
 
         // Served today = SERVING + COMPLETED tickets created today
@@ -486,11 +516,11 @@ public class QueueFacade {
         ServiceOffice office = officeRepository.findById(officeId)
                 .orElseThrow(() -> new RuntimeException("Office not found"));
 
-        if (!office.getOwnerUserId().equals(ownerUserId)) {
+        if (!ownerUserId.equals(office.getOwnerUserId())) {
             throw new RuntimeException("Only the owner can add staff");
         }
 
-        User staffUser = userRepository.findByEmail(staffEmail.trim().toLowerCase())
+        User staffUser = userRepository.findByEmailIgnoreCase(staffEmail.trim())
                 .orElseThrow(() -> new RuntimeException("No user found with email: " + staffEmail));
 
         if (staffUser.getId().equals(ownerUserId)) {
@@ -521,7 +551,7 @@ public class QueueFacade {
         ServiceOffice office = officeRepository.findById(officeId)
                 .orElseThrow(() -> new RuntimeException("Office not found"));
 
-        if (!office.getOwnerUserId().equals(ownerUserId)) {
+        if (!ownerUserId.equals(office.getOwnerUserId())) {
             throw new RuntimeException("Only the owner can remove staff");
         }
 
@@ -538,7 +568,8 @@ public class QueueFacade {
     /**
      * Get all staff members for an office.
      */
-    public List<Map<String, Object>> getOfficeStaff(Long officeId) {
+    public List<Map<String, Object>> getOfficeStaff(Long officeId, Long actorId) {
+        requireOfficeAccess(officeId, actorId);
         return officeStaffRepository.findByOfficeIdOrderByAddedAtAsc(officeId)
                 .stream()
                 .map(this::buildStaffResponse)
@@ -566,8 +597,38 @@ public class QueueFacade {
      * Check if a user is the owner or a staff member of the given office.
      */
     public boolean isOwnerOrStaff(ServiceOffice office, Long userId) {
-        if (office.getOwnerUserId().equals(userId)) return true;
+        if (userId.equals(office.getOwnerUserId())) return true;
         return officeStaffRepository.existsByOfficeIdAndUserId(office.getId(), userId);
+    }
+
+    public Long resolveUserId(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"))
+                .getId();
+    }
+
+    public void requireSelf(Long userId, Long actorId) {
+        if (!actorId.equals(userId)) {
+            throw new RuntimeException("You can only manage your own queue tickets");
+        }
+    }
+
+    private void requireOfficeAccess(Long officeId, Long actorId) {
+        ServiceOffice office = officeRepository.findById(officeId)
+                .orElseThrow(() -> new RuntimeException("Service office not found"));
+        requireOfficeAccess(office, actorId);
+    }
+
+    private void requireOfficeAccess(ServiceOffice office, Long actorId) {
+        if (!isOwnerOrStaff(office, actorId)) {
+            throw new RuntimeException("You do not have permission to manage this office");
+        }
+    }
+
+    /** A ticket can be acted on by its holder or by the owner/staff of its office. */
+    private void requireTicketAccess(QueueTicket ticket, Long actorId) {
+        if (actorId.equals(ticket.getUserId())) return;
+        requireOfficeAccess(ticket.getOfficeId(), actorId);
     }
 
     // ── Admin: All Approved Offices ──────────────────────────────────

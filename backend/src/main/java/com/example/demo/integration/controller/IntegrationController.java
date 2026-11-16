@@ -26,8 +26,9 @@ public class IntegrationController {
     @GetMapping("/holidays")
     public ResponseEntity<ApiResponse<List<Holiday>>> getHolidays(
             @RequestParam(defaultValue = "PH") String country,
-            @RequestParam(defaultValue = "2026") int year) {
+            @RequestParam(required = false) Integer year) {
         try {
+            if (year == null) year = java.time.Year.now().getValue();
             List<Holiday> holidays = holidayProvider.getHolidays(country, year);
             return ResponseEntity.ok(ApiResponse.success(holidays));
         } catch (Exception e) {

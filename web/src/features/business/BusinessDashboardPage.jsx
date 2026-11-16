@@ -5,6 +5,7 @@ import {
   toggleOffice, advanceQueue,
   getOfficeStaff, addOfficeStaff, removeOfficeStaff,
   getOfficeQueue,
+  completeTicket,
 } from '../../shared/services/queueService';
 import './BusinessDashboardPage.css';
 
@@ -120,6 +121,20 @@ export default function BusinessDashboardPage() {
       setActionMsg(err.message || 'Failed to toggle status.');
     } finally {
       setToggling(false);
+    }
+  };
+
+  const handleSkip = async () => {
+    setAdvancing(true);
+    setActionMsg('');
+    try {
+      await completeTicket(servingNow.id);
+      setActionMsg(`Ticket ${servingNow.ticketNumber} marked as no-show. Moving to next customer.`);
+      await loadQueue();
+    } catch (err) {
+      setActionMsg(err.message || 'Failed to skip ticket.');
+    } finally {
+      setAdvancing(false);
     }
   };
 
@@ -306,8 +321,8 @@ export default function BusinessDashboardPage() {
                 <button
                   type="button"
                   className="bdash-ctrl-btn bdash-ctrl-skip"
-                  onClick={() => setActionMsg('No-show marked. Moving to next customer.')}
-                  disabled={!office.isActive}
+                  onClick={handleSkip}
+                  disabled={advancing || !servingNow || !office.isActive}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4l10 8-10 8V4z"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
                   Skip (No-Show)

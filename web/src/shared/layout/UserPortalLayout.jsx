@@ -22,6 +22,7 @@ export default function UserPortalLayout() {
   const [partnerStatus, setPartnerStatus] = useState(isPartner ? 'loading' : 'customer');
   const [approvedOffice, setApprovedOffice] = useState(null);
   const [pendingRegistrations, setPendingRegistrations] = useState([]);
+  const [checkedPath, setCheckedPath] = useState(null);
 
   // Staff portal
   const [staffOffice, setStaffOffice] = useState(null);
@@ -56,6 +57,8 @@ export default function UserPortalLayout() {
         setPartnerStatus('none');
       } catch {
         setPartnerStatus('none');
+      } finally {
+        setCheckedPath(location.pathname);
       }
     };
 
@@ -104,7 +107,7 @@ export default function UserPortalLayout() {
 
   // Redirect enforcement
   useEffect(() => {
-    if (!isPartner || partnerStatus === 'loading' || partnerStatus === 'customer') return;
+    if (!isPartner || partnerStatus === 'loading' || partnerStatus === 'customer' || checkedPath !== location.pathname) return;
 
     if (partnerStatus === 'none') {
       if (location.pathname !== '/dashboard/register-business') {
@@ -117,7 +120,7 @@ export default function UserPortalLayout() {
       }
     }
     // approved partners can go anywhere in their dashboard
-  }, [isPartner, partnerStatus, location.pathname, navigate]);
+  }, [isPartner, partnerStatus, checkedPath, location.pathname, navigate]);
 
   const handleLogout = () => {
     localStorage.removeItem('token');

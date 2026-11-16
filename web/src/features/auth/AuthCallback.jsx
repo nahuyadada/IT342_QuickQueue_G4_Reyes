@@ -34,6 +34,8 @@ export default function AuthCallback() {
           return;
         }
 
+        localStorage.removeItem('activeTicketId');
+        localStorage.removeItem('partnerRole');
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify({
           id: id ? Number(id) : null,

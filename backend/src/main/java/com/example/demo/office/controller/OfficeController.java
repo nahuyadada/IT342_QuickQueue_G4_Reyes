@@ -245,7 +245,9 @@ public class OfficeController {
             @RequestHeader("Authorization") String authHeader,
             @PathVariable Long officeId) {
         try {
-            List<Map<String, Object>> staff = queueFacade.getOfficeStaff(officeId);
+            Map<String, Object> profile = authService.getCurrentUserProfile(authHeader);
+            Long userId = ((Number) profile.get("id")).longValue();
+            List<Map<String, Object>> staff = queueFacade.getOfficeStaff(officeId, userId);
             return ResponseEntity.ok(ApiResponse.success(staff));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest()

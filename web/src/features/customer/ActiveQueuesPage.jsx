@@ -20,16 +20,23 @@ export default function ActiveQueuesPage() {
   const clearMessages = () => { setError(''); setSuccess(''); };
 
   const refreshQueueStatus = async (ticketId = activeTicketId) => {
-    if (!ticketId) { setLoading(false); return; }
+    if (!ticketId) { setLoading(false); return false; }
     try {
       const status = await getQueueStatus(Number(ticketId));
+      if (!['WAITING', 'SERVING'].includes(status.status)) {
+        // Finished elsewhere (staff completed it, or cancelled on another device) — stop polling
+        setTicketStatus(null); setActiveTicketId('');
+        localStorage.removeItem('activeTicketId');
+        return false;
+      }
       setTicketStatus(status);
       setActiveTicketId(String(status.ticketId));
       localStorage.setItem('activeTicketId', String(status.ticketId));
+      return true;
     } catch {
-      // Ticket may have been completed/cancelled — stop polling
       setTicketStatus(null); setActiveTicketId('');
       localStorage.removeItem('activeTicketId');
+      return false;
     } finally {
       setLoading(false);
     }
@@ -39,29 +46,26 @@ export default function ActiveQueuesPage() {
   useEffect(() => {
     const bootstrap = async () => {
       try { await getCurrentUserProfile(); } catch { /* use cached user */ }
-      if (activeTicketId) {
-        await refreshQueueStatus(activeTicketId);
-      } else {
-        // No cached ticket — look up active tickets from the server
-        try {
-          const user = JSON.parse(localStorage.getItem('user') || '{}');
-          const userId = user?.id;
-          if (userId) {
-            const tickets = await getMyTickets(userId);
-            const active = Array.isArray(tickets)
-              ? tickets.find(t => t.status === 'WAITING' || t.status === 'SERVING')
-              : null;
-            if (active) {
-              const id = String(active.ticketId);
-              localStorage.setItem('activeTicketId', id);
-              setActiveTicketId(id);
-              await refreshQueueStatus(id);
-              return;
-            }
+      if (activeTicketId && await refreshQueueStatus(activeTicketId)) return;
+      // No usable cached ticket — look up active tickets from the server
+      try {
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const userId = user?.id;
+        if (userId) {
+          const tickets = await getMyTickets(userId);
+          const active = Array.isArray(tickets)
+            ? tickets.find(t => t.status === 'WAITING' || t.status === 'SERVING')
+            : null;
+          if (active) {
+            const id = String(active.ticketId);
+            localStorage.setItem('activeTicketId', id);
+            setActiveTicketId(id);
+            await refreshQueueStatus(id);
+            return;
           }
-        } catch { /* stay empty */ }
-        setLoading(false);
-      }
+        }
+      } catch { /* stay empty */ }
+      setLoading(false);
     };
     bootstrap();
 

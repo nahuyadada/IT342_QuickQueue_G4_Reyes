@@ -9,6 +9,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -27,8 +29,8 @@ class QueueTicketFactoryTest {
 
     @Test
     void createTicket_shouldReturnTicketWithWaitingStatus() {
-        when(queueTicketRepository.countByOfficeIdAndStatus(1L, QueueTicket.TicketStatus.WAITING))
-                .thenReturn(0);
+        when(queueTicketRepository.findFirstByOfficeIdAndStatusOrderByPositionDesc(1L, QueueTicket.TicketStatus.WAITING))
+                .thenReturn(Optional.empty());
 
         QueueTicket ticket = ticketFactory.createTicket(100L, 1L);
 
@@ -39,8 +41,8 @@ class QueueTicketFactoryTest {
 
     @Test
     void createTicket_shouldCalculatePositionCorrectly() {
-        when(queueTicketRepository.countByOfficeIdAndStatus(1L, QueueTicket.TicketStatus.WAITING))
-                .thenReturn(5);
+        when(queueTicketRepository.findFirstByOfficeIdAndStatusOrderByPositionDesc(1L, QueueTicket.TicketStatus.WAITING))
+                .thenReturn(Optional.of(QueueTicket.builder().position(5).build()));
 
         QueueTicket ticket = ticketFactory.createTicket(100L, 1L);
 
@@ -49,8 +51,8 @@ class QueueTicketFactoryTest {
 
     @Test
     void createTicket_shouldGenerateTicketNumber() {
-        when(queueTicketRepository.countByOfficeIdAndStatus(1L, QueueTicket.TicketStatus.WAITING))
-                .thenReturn(0);
+        when(queueTicketRepository.findFirstByOfficeIdAndStatusOrderByPositionDesc(1L, QueueTicket.TicketStatus.WAITING))
+                .thenReturn(Optional.empty());
 
         QueueTicket ticket = ticketFactory.createTicket(100L, 1L);
 
@@ -60,8 +62,8 @@ class QueueTicketFactoryTest {
 
     @Test
     void createTicket_shouldSetCreatedAt() {
-        when(queueTicketRepository.countByOfficeIdAndStatus(1L, QueueTicket.TicketStatus.WAITING))
-                .thenReturn(0);
+        when(queueTicketRepository.findFirstByOfficeIdAndStatusOrderByPositionDesc(1L, QueueTicket.TicketStatus.WAITING))
+                .thenReturn(Optional.empty());
 
         QueueTicket ticket = ticketFactory.createTicket(100L, 1L);
 
@@ -85,8 +87,8 @@ class QueueTicketFactoryTest {
 
     @Test
     void createTicket_withEmptyQueue_shouldSetPositionToOne() {
-        when(queueTicketRepository.countByOfficeIdAndStatus(1L, QueueTicket.TicketStatus.WAITING))
-                .thenReturn(0);
+        when(queueTicketRepository.findFirstByOfficeIdAndStatusOrderByPositionDesc(1L, QueueTicket.TicketStatus.WAITING))
+                .thenReturn(Optional.empty());
 
         QueueTicket ticket = ticketFactory.createTicket(100L, 1L);
 
