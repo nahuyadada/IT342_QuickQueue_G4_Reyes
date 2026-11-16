@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { login, register } from './authService';
 import { getMyRegistrations } from '../../shared/services/queueService';
+import { API_BASE } from '../../shared/services/apiClient';
 import './AuthPage.css';
 
 /* ── SVG Icon Components ── */
@@ -134,8 +135,11 @@ export default function AuthPage() {
   const persistAuth = (data, partnerRole = null) => {
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify({ id: data.id, name: data.name, email: data.email, role: data.role }));
+    localStorage.removeItem('activeTicketId');
     if (partnerRole) {
       localStorage.setItem('partnerRole', partnerRole);
+    } else {
+      localStorage.removeItem('partnerRole');
     }
   };
 
@@ -221,7 +225,7 @@ export default function AuthPage() {
   };
 
   const handleGoogleOAuthRedirect = () => {
-    window.location.href = 'http://localhost:8080/oauth2/authorization/google';
+    window.location.href = `${API_BASE.replace(/\/api\/?$/, '')}/oauth2/authorization/google`;
   };
 
   const renderGoogleSignIn = () => (

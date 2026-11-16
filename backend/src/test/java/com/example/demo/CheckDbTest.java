@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 @SpringBootTest
+@org.junit.jupiter.api.Disabled("Runs against the configured (production) database — enable manually when needed")
 public class CheckDbTest {
 
     @Autowired

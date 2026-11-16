@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePartner } from '../../shared/layout/UserPortalLayout';
-import { toggleOffice, advanceQueue, getOfficeQueue, getOfficeStats } from '../../shared/services/queueService';
+import { toggleOffice, advanceQueue, completeTicket, getOfficeQueue, getOfficeStats } from '../../shared/services/queueService';
 import '../business/BusinessDashboardPage.css';
 
 export default function PartnerQueuePage() {
@@ -36,7 +36,7 @@ export default function PartnerQueuePage() {
 
   if (!officeState) return null;
 
-  const servingNow = queueList.find(q => q.status === 'SERVING');
+  const servingNow = queueList.filter(q => q.status === 'SERVING').at(-1);
   const waitingList = queueList.filter(q => q.status === 'WAITING');
 
   const handleToggle = async () => {
@@ -56,6 +56,18 @@ export default function PartnerQueuePage() {
     try {
       const result = await advanceQueue(officeState.officeId);
       setActionMsg(`Now serving ticket ${result.ticketNumber}. ${result.waitingCount} still waiting.`);
+      const data = await getOfficeQueue(officeState.officeId);
+      setQueueList(Array.isArray(data) ? data : []);
+    } catch (err) { setActionMsg(err.message); }
+    finally { setAdvancing(false); }
+  };
+
+  const handleSkip = async () => {
+    setAdvancing(true);
+    setActionMsg('');
+    try {
+      await completeTicket(servingNow.id);
+      setActionMsg(`Ticket ${servingNow.ticketNumber} marked as no-show. Moving to next customer.`);
       const data = await getOfficeQueue(officeState.officeId);
       setQueueList(Array.isArray(data) ? data : []);
     } catch (err) { setActionMsg(err.message); }
@@ -120,7 +132,7 @@ export default function PartnerQueuePage() {
               )}
             </button>
 
-            <button type="button" className="bdash-ctrl-btn bdash-ctrl-skip" onClick={() => setActionMsg('No-show marked. Moving to next customer.')} disabled={!officeState.isActive}>
+            <button type="button" className="bdash-ctrl-btn bdash-ctrl-skip" onClick={handleSkip} disabled={advancing || !servingNow || !officeState.isActive}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 4l10 8-10 8V4z"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
               Skip (No-Show)
             </button>

@@ -25,7 +25,7 @@ class QueueEventTest {
     @Test
     void eventType_shouldHaveAllExpectedValues() {
         QueueEvent.EventType[] values = QueueEvent.EventType.values();
-        assertEquals(4, values.length);
+        assertEquals(5, values.length);
     }
 
     @Test

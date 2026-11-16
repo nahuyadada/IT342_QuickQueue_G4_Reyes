@@ -27,8 +27,12 @@ public class QueueTicketFactory {
      * and calculated position based on how many people are already waiting.
      */
     public QueueTicket createTicket(Long userId, Long officeId) {
-        int currentWaiting = queueTicketRepository.countByOfficeIdAndStatus(
-                officeId, QueueTicket.TicketStatus.WAITING);
+        // Go after the last waiting ticket; counting waiting tickets would reuse a
+        // position whenever someone ahead cancelled.
+        int position = queueTicketRepository.findFirstByOfficeIdAndStatusOrderByPositionDesc(
+                        officeId, QueueTicket.TicketStatus.WAITING)
+                .map(last -> last.getPosition() + 1)
+                .orElse(1);
 
         // Use total tickets created TODAY (all statuses) for unique sequence number
         LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
@@ -40,7 +44,7 @@ public class QueueTicketFactory {
                 .userId(userId)
                 .officeId(officeId)
                 .status(QueueTicket.TicketStatus.WAITING)
-                .position(currentWaiting + 1)
+                .position(position)
                 .createdAt(LocalDateTime.now())
                 .build();
     }

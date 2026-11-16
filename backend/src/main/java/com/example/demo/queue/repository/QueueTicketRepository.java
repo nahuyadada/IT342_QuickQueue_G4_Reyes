@@ -33,6 +33,8 @@ public interface QueueTicketRepository extends JpaRepository<QueueTicket, Long> 
 
     Optional<QueueTicket> findFirstByOfficeIdAndStatusOrderByPositionAsc(Long officeId, QueueTicket.TicketStatus status);
 
+    Optional<QueueTicket> findFirstByOfficeIdAndStatusOrderByPositionDesc(Long officeId, QueueTicket.TicketStatus status);
+
     @Modifying
     @Transactional
     void deleteByOfficeId(Long officeId);

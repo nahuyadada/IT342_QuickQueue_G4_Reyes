@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useStaff } from '../../shared/layout/UserPortalLayout';
-import { toggleOffice, advanceQueue } from '../../shared/services/queueService';
-import apiClient from '../../shared/services/apiClient';
+import { toggleOffice, advanceQueue, completeTicket, getOfficeQueue } from '../../shared/services/queueService';
 import '../business/BusinessDashboardPage.css';
 
 export default function StaffQueuePage() {
@@ -26,20 +25,15 @@ export default function StaffQueuePage() {
     if (!officeState?.officeId) return;
     setLoadingQueue(true);
     try {
-      const [countsData] = await Promise.all([
-        apiClient.get('/offices/queue-counts'),
-      ]);
-      // counts is a map of officeId → waitingCount — use to refresh UI
-      // For detailed ticket list we'd need a staff endpoint; show counts for now
-      const count = countsData?.[officeState.officeId] ?? 0;
-      // Update waiting count synthetic list
-      if (!servingTicket) {
-        setWaitingList(Array.from({ length: count }, (_, i) => ({ pos: i + 1 })));
-      }
+      const data = await getOfficeQueue(officeState.officeId);
+      const list = Array.isArray(data) ? data : [];
+      const serving = list.filter(q => q.status === 'SERVING').at(-1);
+      setServingTicket(serving ? { ticketId: serving.id, ticketNumber: serving.ticketNumber, name: serving.name } : null);
+      setWaitingList(list.filter(q => q.status === 'WAITING').map((q, i) => ({ ...q, pos: i + 1 })));
     } catch { /* ignore */ } finally {
       setLoadingQueue(false);
     }
-  }, [officeState?.officeId, servingTicket]);
+  }, [officeState?.officeId]);
 
   useEffect(() => {
     loadQueue();
@@ -63,9 +57,8 @@ export default function StaffQueuePage() {
     setAdvancing(true);
     try {
       const result = await advanceQueue(officeState.officeId);
-      setServingTicket(result);
       const remaining = result.waitingCount ?? 0;
-      setWaitingList(Array.from({ length: remaining }, (_, i) => ({ pos: i + 1 })));
+      await loadQueue();
       flash(`Now serving ticket ${result.ticketNumber}. ${remaining} still waiting.`);
     } catch (err) { flash(err.message); }
     finally { setAdvancing(false); }
@@ -78,7 +71,7 @@ export default function StaffQueuePage() {
     }
     setSkipping(true);
     try {
-      await apiClient.post(`/queues/complete/${servingTicket.ticketId}`);
+      await completeTicket(servingTicket.ticketId);
       flash(`Ticket ${servingTicket.ticketNumber} marked as no-show. Calling next...`);
       setServingTicket(null);
       // auto-advance is handled by completeTicket on backend
@@ -177,7 +170,7 @@ export default function StaffQueuePage() {
               <div className="bdash-serving-label">Now Serving</div>
               <div className="bdash-serving-ticket">
                 <strong>{servingTicket.ticketNumber}</strong>
-                <span>{servingTicket.officeName}</span>
+                <span>{servingTicket.name}</span>
               </div>
             </div>
           ) : (
@@ -195,7 +188,7 @@ export default function StaffQueuePage() {
             <span className="bdash-badge">{waitingList.length} waiting</span>
           </div>
           <p className="bdash-card-sub" style={{ marginBottom: '0.75rem' }}>
-            Live count updates every 10 seconds.
+            Updates every 10 seconds.
           </p>
           {waitingList.length === 0 ? (
             <div className="bdash-empty">
@@ -209,8 +202,8 @@ export default function StaffQueuePage() {
                 <div key={item.pos} className="bdash-queue-item">
                   <div className="bdash-queue-pos">{item.pos}</div>
                   <div className="bdash-queue-info">
-                    <strong>Position {item.pos}</strong>
-                    <span>Waiting in queue</span>
+                    <strong>{item.ticketNumber}</strong>
+                    <span>{item.name}</span>
                   </div>
                 </div>
               ))}
